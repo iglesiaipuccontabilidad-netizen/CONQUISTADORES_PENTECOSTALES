@@ -1,0 +1,170 @@
+{
+  "info": {
+    "name": "Conquistadores App - API v1",
+    "description": "Colección de endpoints Fase 2 Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 AUTENTICACIÓN",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@conquistadores.com\",\n  \"password\": \"Admin123\"\n}"
+            },
+            "url": {
+              "raw": "https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth",
+              "protocol": "https",
+              "host": [
+                "dcgkzuouqeznxtfzgdil",
+                "supabase",
+                "co"
+              ],
+              "path": [
+                "functions",
+                "v1",
+                "auth"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recuperar Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@ejemplo.com\"\n}"
+            },
+            "url": {
+              "raw": "https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/recuperar",
+              "protocol": "https",
+              "host": [
+                "dcgkzuouqeznxtfzgdil",
+                "supabase",
+                "co"
+              ],
+              "path": [
+                "functions",
+                "v1",
+                "auth",
+                "recuperar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener Usuario Loggeado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/me",
+              "protocol": "https",
+              "host": [
+                "dcgkzuouqeznxtfzgdil",
+                "supabase",
+                "co"
+              ],
+              "path": [
+                "functions",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 REGISTRO PÚBLICO",
+      "item": [
+        {
+          "name": "Registrar Nuevo Joven",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_completo\": \"Maria García López\",\n  \"fecha_nacimiento\": \"2010-05-15\",\n  \"cedula\": \"12345678\",\n  \"celular\": \"+573001234567\",\n  \"grupo_id\": null,\n  \"bautizado\": false,\n  \"sellado\": true,\n  \"servidor\": false,\n  \"simpatizante\": true,\n  \"consentimiento_datos_personales\": true,\n  \"consentimiento_whatsapp\": true,\n  \"consentimiento_procesamiento\": true,\n  \"consentimiento_terminos\": true\n}"
+            },
+            "url": {
+              "raw": "https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/registro",
+              "protocol": "https",
+              "host": [
+                "dcgkzuouqeznxtfzgdil",
+                "supabase",
+                "co"
+              ],
+              "path": [
+                "functions",
+                "v1",
+                "auth",
+                "joven",
+                "registro"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Validar Cédula (Disponibilidad)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/cedula/12345678",
+              "protocol": "https",
+              "host": [
+                "dcgkzuouqeznxtfzgdil",
+                "supabase",
+                "co"
+              ],
+              "path": [
+                "functions",
+                "v1",
+                "auth",
+                "joven",
+                "cedula",
+                "12345678"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
