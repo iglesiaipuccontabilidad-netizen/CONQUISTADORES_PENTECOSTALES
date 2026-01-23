@@ -1,8 +1,8 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import apiClient from '@/utils/api-client'
-import { Joven, ApiResponse } from '@/types'
+import apiClient from '../utils/api-client'
+import { Joven, ApiResponse } from '../types'
 
 export const useJovenes = () => {
   const queryClient = useQueryClient()
