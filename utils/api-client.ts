@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../lib/supabase'
 
 interface ApiErrorResponse {
   success: false
