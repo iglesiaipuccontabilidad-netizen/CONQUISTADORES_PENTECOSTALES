@@ -1,4 +1,4 @@
-# 🎉 RESUMEN - FASE 2 BACKEND COMPLETADA
+# RESUMEN - FASE 2 BACKEND COMPLETADA
 
 ## ✅ Lo que se ha completado
 
@@ -10,14 +10,12 @@
   - ✅ POST `/auth/recuperar` - Recuperar contraseña
   - ✅ GET `/auth/me` - Datos usuario
   - ✅ POST `/api/joven/registro` - Registro público
-  - ✅ GET `/api/joven/cedula/{cedula}` - Validar cédula
 
 ### 2. **PostgreSQL Functions** (Deployed ✅)
 - ✅ `handle_new_user()` - Auto-create users
-- ✅ `check_cedula_unique()` - Validar cédula única
 - ✅ `check_valid_age()` - Validar edad 12-35
 - ✅ `check_valid_celular()` - Validar +57XXXXXXXXXX
-- ✅ `check_all_consents()` - Validar 4 consentimientos
+- ✅ `check_all_consents()` - Validar consentimiento
 - ✅ `log_activity()` - Auditoría
 - ✅ `log_deletion()` - Auditoría eliminaciones
 - ✅ `update_ultima_sesion()` - Track sessions
@@ -85,12 +83,8 @@ curl -X POST https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/re
   -d '{
     "nombre_completo": "Test User",
     "fecha_nacimiento": "2010-05-15",
-    "cedula": "12345679",
     "celular": "+573001234567",
-    "consentimiento_datos_personales": true,
-    "consentimiento_whatsapp": true,
-    "consentimiento_procesamiento": true,
-    "consentimiento_terminos": true
+    "consentimiento_datos_personales": true
   }'
 ```
 

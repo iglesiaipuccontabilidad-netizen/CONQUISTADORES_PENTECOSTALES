@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +38,12 @@ import {
   User,
   Database,
   Eye,
-  Download
+  Download,
+  ShieldAlert,
+  Clock,
+  Fingerprint,
+  RotateCcw,
+  Zap
 } from 'lucide-react';
 
 // Mock data
@@ -74,29 +80,9 @@ const mockActivityLogs = [
   },
 ];
 
-const mockDeletionHistory = [
-  {
-    id: '1',
-    tabla: 'jovenes',
-    registro_id: '125',
-    eliminado_por: 'admin@conquistadores.org',
-    motivo: 'Solicitud del interesado',
-    fecha: '2024-01-19 12:00:00',
-    datos_eliminados: {
-      nombre_completo: 'María García',
-      cedula: '87654321',
-      celular: '3019876543',
-      fecha_nacimiento: '2000-05-15'
-    }
-  },
-];
-
 export default function LogsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [accionFilter, setAccionFilter] = useState('todos');
-  const [usuarioFilter, setUsuarioFilter] = useState('todos');
-  const [fechaDesde, setFechaDesde] = useState('');
-  const [fechaHasta, setFechaHasta] = useState('');
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
@@ -105,28 +91,25 @@ export default function LogsPage() {
 
   const filteredActivityLogs = mockActivityLogs.filter(log => {
     const matchesSearch = log.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.tabla.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         log.accion.toLowerCase().includes(searchTerm.toLowerCase());
+      log.tabla.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.accion.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAccion = accionFilter === 'todos' || log.accion === accionFilter;
-    const matchesUsuario = usuarioFilter === 'todos' || log.usuario === usuarioFilter;
-
-    return matchesSearch && matchesAccion && matchesUsuario;
-  });
-
-  const filteredDeletionHistory = mockDeletionHistory.filter(log => {
-    return log.eliminado_por.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           log.tabla.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           log.motivo.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch && matchesAccion;
   });
 
   const getAccionBadge = (accion: string) => {
-    const variants = {
-      CREATE: 'default',
-      UPDATE: 'secondary',
-      DELETE: 'destructive',
-      READ: 'outline'
-    } as const;
-    return <Badge variant={variants[accion as keyof typeof variants] || 'outline'}>{accion}</Badge>;
+    const map: any = {
+      CREATE: { color: '#0066B3', bg: '#0066B310' },
+      UPDATE: { color: '#F5A623', bg: '#F5A62310' },
+      DELETE: { color: '#ef4444', bg: '#ef444410' },
+      READ: { color: '#00338D', bg: '#00338D10' }
+    };
+    const style = map[accion] || { color: '#64748b', bg: '#f1f5f9' };
+    return (
+      <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest" style={{ color: style.color, backgroundColor: style.bg }}>
+        {accion}
+      </span>
+    );
   };
 
   const handleViewDetails = (log: any) => {
@@ -135,112 +118,115 @@ export default function LogsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8 pb-12"
+    >
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Logs y Auditoría</h1>
-          <p className="text-slate-500 mt-1">Historial de actividades y eliminaciones</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center">
+            LOGS DE <span className="text-[#00338D] ml-2">AUDITORÍA</span>
+            <ShieldAlert className="ml-3 w-6 h-6 text-[#F5A623]" />
+          </h1>
+          <p className="text-slate-500 font-medium font-prose uppercase tracking-widest text-xs opacity-70">
+            Trazabilidad e Integridad de Datos - Unánimes
+          </p>
         </div>
-        <Button variant="outline">
-          <Download size={16} className="mr-2" />
-          Exportar Logs
+        <Button variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 font-bold text-slate-600 hover:bg-slate-50">
+          <Download size={18} className="mr-2" />
+          EXPORTAR REGISTROS
         </Button>
       </div>
 
-      {/* Filtros */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="md:col-span-2">
+      {/* Filters Card */}
+      <Card className="p-6 md:p-8 border-slate-100 shadow-xl shadow-slate-200/40 rounded-[2.5rem] bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2 relative group">
+            <Search className="absolute left-4 top-4 text-slate-400 group-focus-within:text-[#00338D] transition-colors" size={20} />
             <Input
-              placeholder="Buscar por usuario, tabla, acción..."
+              placeholder="Buscar usuario o acción..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
+              className="h-14 pl-12 rounded-2xl border-slate-200 bg-slate-50 focus:bg-white"
             />
           </div>
           <Select value={accionFilter} onValueChange={setAccionFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por acción" />
+            <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-slate-50 font-bold uppercase tracking-widest text-[10px]">
+              <SelectValue placeholder="Acción" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todas las acciones</SelectItem>
-              <SelectItem value="CREATE">Crear</SelectItem>
-              <SelectItem value="UPDATE">Actualizar</SelectItem>
-              <SelectItem value="DELETE">Eliminar</SelectItem>
-              <SelectItem value="READ">Leer</SelectItem>
+            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+              <SelectItem value="todos">TODAS LAS ACCIONES</SelectItem>
+              <SelectItem value="CREATE">CREAR</SelectItem>
+              <SelectItem value="UPDATE">ACTUALIZAR</SelectItem>
+              <SelectItem value="DELETE">ELIMINAR</SelectItem>
             </SelectContent>
           </Select>
-          <Input
-            type="date"
-            placeholder="Desde"
-            value={fechaDesde}
-            onChange={(e) => setFechaDesde(e.target.value)}
-          />
-          <Input
-            type="date"
-            placeholder="Hasta"
-            value={fechaHasta}
-            onChange={(e) => setFechaHasta(e.target.value)}
-          />
+          <div className="flex items-center gap-2 px-6 bg-slate-50 rounded-2xl border border-slate-200">
+            <Clock size={18} className="text-slate-400" />
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sincronizado</span>
+          </div>
         </div>
       </Card>
 
-      {/* Tabs */}
-      <Tabs defaultValue="actividad" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="actividad" className="flex items-center gap-2">
-            <Activity size={16} />
-            Actividad de Usuarios
+      <Tabs defaultValue="actividad" className="space-y-6">
+        <TabsList className="bg-slate-100/50 p-1.5 rounded-[1.8rem] border border-slate-100 h-auto">
+          <TabsTrigger value="actividad" className="rounded-[1.3rem] py-3.5 px-8 font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-[#00338D] data-[state=active]:text-white">
+            Actividad Global
           </TabsTrigger>
-          <TabsTrigger value="eliminaciones" className="flex items-center gap-2">
-            <Trash2 size={16} />
-            Historial de Eliminaciones
+          <TabsTrigger value="eliminaciones" className="rounded-[1.3rem] py-3.5 px-8 font-black text-[10px] uppercase tracking-widest data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            Eliminaciones
           </TabsTrigger>
         </TabsList>
 
-        {/* Actividad de Usuarios */}
         <TabsContent value="actividad">
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border-slate-100 shadow-2xl rounded-[2.5rem] bg-white h-full relative overflow-hidden">
             {isLoading ? (
-              <div className="p-6 space-y-3">
-                {Array(5).fill(0).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
+              <div className="p-10 space-y-4">
+                {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Usuario</TableHead>
-                      <TableHead>Acción</TableHead>
-                      <TableHead>Tabla</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>IP</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
+                    <TableRow className="bg-slate-50/50 border-b border-slate-100">
+                      <TableHead className="px-8 py-5 font-black text-slate-400 uppercase tracking-widest text-[10px]">USUARIO</TableHead>
+                      <TableHead className="px-6 py-5 font-black text-slate-400 uppercase tracking-widest text-[10px]">EVENTO</TableHead>
+                      <TableHead className="px-6 py-5 font-black text-slate-400 uppercase tracking-widest text-[10px]">MÓDULO</TableHead>
+                      <TableHead className="px-6 py-5 font-black text-slate-400 uppercase tracking-widest text-[10px]">TIMESTAMP</TableHead>
+                      <TableHead className="px-6 py-5 font-black text-slate-400 uppercase tracking-widest text-[10px]">DIRECCIÓN IP</TableHead>
+                      <TableHead className="px-8 py-5 text-right font-black text-slate-400 uppercase tracking-widest text-[10px]">ACCIONES</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredActivityLogs.map((log) => (
-                      <TableRow key={log.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium">{log.usuario}</TableCell>
-                        <TableCell>{getAccionBadge(log.accion)}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Database size={14} className="text-slate-400" />
+                      <TableRow key={log.id} className="group hover:bg-slate-50/50 transition-colors">
+                        <TableCell className="px-8 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-[#00338D]/5 flex items-center justify-center">
+                              <User size={14} className="text-[#00338D]" />
+                            </div>
+                            <span className="font-bold text-slate-700">{log.usuario}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-6 py-5">{getAccionBadge(log.accion)}</TableCell>
+                        <TableCell className="px-6 py-5 h-16">
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-tight">
+                            <Database size={14} className="text-slate-300" />
                             {log.tabla}
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-500">{log.fecha}</TableCell>
-                        <TableCell className="font-mono text-sm">{log.ip}</TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewDetails(log)}
-                          >
-                            <Eye size={14} />
+                        <TableCell className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                            <Clock size={14} className="text-slate-300" />
+                            {log.fecha}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-6 py-5 font-mono text-[10px] text-slate-400">{log.ip}</TableCell>
+                        <TableCell className="px-8 py-5 text-right">
+                          <Button size="icon" variant="ghost" className="w-10 h-10 rounded-xl" onClick={() => handleViewDetails(log)}>
+                            <Eye size={18} className="text-[#00338D]" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -252,102 +238,56 @@ export default function LogsPage() {
           </Card>
         </TabsContent>
 
-        {/* Historial de Eliminaciones */}
         <TabsContent value="eliminaciones">
-          <Card className="overflow-hidden">
-            {isLoading ? (
-              <div className="p-6 space-y-3">
-                {Array(3).fill(0).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredDeletionHistory.map((log) => (
-                  <Card key={log.id} className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Trash2 size={16} className="text-red-500" />
-                          <span className="font-medium">Eliminación en {log.tabla}</span>
-                          <Badge variant="outline">ID: {log.registro_id}</Badge>
-                        </div>
-                        <div className="text-sm text-slate-600 space-y-1">
-                          <p><strong>Eliminado por:</strong> {log.eliminado_por}</p>
-                          <p><strong>Motivo:</strong> {log.motivo}</p>
-                          <p><strong>Fecha:</strong> {log.fecha}</p>
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-medium text-slate-700 mb-1">Datos eliminados:</p>
-                          <pre className="bg-slate-100 p-2 rounded text-xs overflow-x-auto">
-                            {JSON.stringify(log.datos_eliminados, null, 2)}
-                          </pre>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewDetails(log)}
-                      >
-                        <Eye size={14} className="mr-1" />
-                        Ver Detalles
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+          <Card className="p-20 text-center space-y-4 border-slate-100 shadow-xl rounded-[2.5rem] bg-white border-dashed border-2">
+            <RotateCcw size={48} className="mx-auto text-slate-200" />
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Módulo de recuperación inactivo</p>
+            <p className="text-slate-400 font-medium text-[10px] max-w-xs mx-auto">Las eliminaciones son permanentes en este servidor por políticas de seguridad de datos.</p>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Details Dialog */}
+      {/* Details Dialog Premium */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Detalles de la Actividad</DialogTitle>
-            <DialogDescription>
-              Información completa de la acción realizada
-            </DialogDescription>
-          </DialogHeader>
-          {selectedLog && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="font-medium text-slate-700">Usuario</p>
-                  <p>{selectedLog.usuario}</p>
+        <DialogContent className="max-w-xl rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
+          <div className="bg-[#00338D] h-2 w-full" />
+          <div className="p-8 md:p-10 space-y-8">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <Fingerprint className="text-[#F5A623]" size={28} />
+                FOOTPRINT DIGITAL
+              </DialogTitle>
+              <DialogDescription className="text-xs font-bold text-slate-400 uppercase tracking-widest pt-2">Detalle técnico de la operación realizada</DialogDescription>
+            </DialogHeader>
+
+            {selectedLog && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <ParamBox label="Usuario Ejecutor" value={selectedLog.usuario} />
+                  <ParamBox label="Evento" value={selectedLog.accion} color="#00338D" />
+                  <ParamBox label="Timestamp" value={selectedLog.fecha} />
+                  <ParamBox label="Operado en IP" value={selectedLog.ip} />
                 </div>
-                <div>
-                  <p className="font-medium text-slate-700">Acción</p>
-                  <p>{selectedLog.accion}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">Tabla</p>
-                  <p>{selectedLog.tabla}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">ID Registro</p>
-                  <p>{selectedLog.registro_id}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">Fecha</p>
-                  <p>{selectedLog.fecha}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">IP</p>
-                  <p className="font-mono">{selectedLog.ip}</p>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Objeto de Datos Sincronizado</label>
+                  <pre className="p-6 rounded-2xl bg-[#1A1A1A] text-emerald-400 text-xs font-mono overflow-x-auto ring-1 ring-white/10 shadow-inner">
+                    {JSON.stringify(selectedLog.detalles, null, 2)}
+                  </pre>
                 </div>
               </div>
-              <div>
-                <p className="font-medium text-slate-700 mb-2">Detalles</p>
-                <pre className="bg-slate-100 p-3 rounded text-sm overflow-x-auto">
-                  {JSON.stringify(selectedLog.detalles, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </DialogContent>
       </Dialog>
+    </motion.div>
+  );
+}
+
+function ParamBox({ label, value, color }: any) {
+  return (
+    <div className="space-y-1">
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+      <p className="text-sm font-bold text-slate-700 truncate" style={{ color: color }}>{value}</p>
     </div>
   );
 }

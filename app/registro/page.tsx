@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
@@ -20,6 +22,27 @@ import { registroJovenSchema, RegistroJovenFormType } from '@/utils/schemas'
 import { validatorsColombia } from '@/utils/validators'
 import apiClient from '@/utils/api-client'
 import { toast } from 'sonner'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  UserPlus,
+  User,
+  CreditCard,
+  Calendar,
+  Phone,
+  Shield,
+  Award,
+  Sparkles,
+  Clock,
+  CheckCircle,
+  Circle,
+  Loader2,
+  Flag,
+  ChevronRight,
+  Info,
+  ShieldCheck
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface RegistroResponse {
   success: boolean
@@ -30,358 +53,316 @@ interface RegistroResponse {
 export default function RegistroPage() {
   const [loading, setLoading] = useState(false)
   const [completado, setCompletado] = useState(false)
-  const [cedulaDisponible, setCedulaDisponible] = useState(true)
+  const router = useRouter()
 
   const form = useForm<RegistroJovenFormType>({
     resolver: zodResolver(registroJovenSchema),
     defaultValues: {
-      nombre: '',
+      nombre_completo: '',
       fecha_nacimiento: '',
       edad: 0,
-      cedula: '',
       celular: '',
       estados: [],
       consentimientos: {
         datos_personales: false,
-        whatsapp: false,
-        procesamiento: false,
-        terminos: false,
       },
     },
     mode: 'onChange',
   })
 
-  // Watch for birth date changes to calculate age
-  const fechaNacimiento = form.watch('fecha_nacimiento')
-  const cedula = form.watch('cedula')
-
-  // Auto-update age
-  useState(() => {
-    if (fechaNacimiento) {
-      const edad = validatorsColombia.calculateAge(fechaNacimiento)
-      form.setValue('edad', edad)
-    }
-  })
-
-  // Validate cedula availability
-  useState(() => {
-    const validateCedula = async () => {
-      if (cedula && validatorsColombia.validateCedula(cedula)) {
-        try {
-          const response = await apiClient.get(
-            `/api/joven/cedula/${cedula}`
-          )
-          setCedulaDisponible(!response.data.existe)
-        } catch {
-          setCedulaDisponible(true)
-        }
-      }
-    }
-
-    const timer = setTimeout(validateCedula, 500)
-    return () => clearTimeout(timer)
-  })
+  const { watch } = form
 
   async function onSubmit(data: RegistroJovenFormType) {
     try {
       setLoading(true)
 
-      // Format celular
-      const celularFormateado = validatorsColombia.formatCelular(data.celular)
-
       const response = await apiClient.post<RegistroResponse>(
         '/api/joven/registro',
-        {
-          ...data,
-          celular: celularFormateado,
-        }
+        data
       )
 
       if (response.data.success) {
-        toast.success('¡Registro completado exitosamente!')
         setCompletado(true)
+        toast.success('¡Registro completado exitosamente!')
+        setTimeout(() => router.push('/'), 3000)
       } else {
-        toast.error(response.data.error || 'Error al registrar')
+        toast.error(response.data.error || 'Error al procesar el registro')
       }
     } catch (error) {
-      toast.error('Error inesperado al registrar')
+      toast.error('Ocurrió un error inesperado. Inténtalo de nuevo.')
     } finally {
       setLoading(false)
     }
   }
 
-  if (completado) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#00338D] via-[#0066B3] to-[#009FDA] flex items-center justify-center p-4">
-        <Card className="p-8 text-center max-w-md bg-white/10 backdrop-blur-sm border-white/20">
-          <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            ¡Registro Exitoso!
-          </h2>
-          <p className="text-white mb-6">
-            Tu registro ha sido completado. En breve te contactaremos con más
-            información.
-          </p>
-          <Link href="/">
-            <Button className="bg-[#F5A623] hover:bg-[#e6951a] text-[#1A1A1A] font-semibold">
-              Volver al Inicio
-            </Button>
-          </Link>
-        </Card>
-      </div>
-    )
-  }
+  // Calculate form completion percentage
+  const watchedFields = form.watch()
+  const totalFields = 1
+  let completedFields = 0
+  if (watchedFields.consentimientos.datos_personales) completedFields++
+
+  const completionPercentage = Math.round((completedFields / totalFields) * 100)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#00338D] via-[#0066B3] to-[#009FDA] py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            🏴 Conquistadores
-          </h1>
-          <p className="text-slate-300">Formulario de Registro</p>
-        </div>
+    <div className="min-h-screen bg-[#1A1A1A] text-white selection:bg-[#F5A623]/30 selection:text-white font-sans relative overflow-x-hidden">
+      {/* Premium Background Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#00338D_0%,transparent_40%),radial-gradient(circle_at_bottom_left,#0066B3_0%,transparent_40%)] opacity-30" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
 
-        {/* Registration Card */}
-        <Card className="p-8 bg-slate-800 border-slate-700">
-          <h2 className="text-2xl font-bold text-white mb-6">
-            Regístrate como Joven
-          </h2>
+        {/* Animated Glows */}
+        <motion.div
+          animate={{
+            opacity: [0.3, 0.5, 0.3],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#F5A623]/10 blur-[120px] rounded-full"
+        />
+        <motion.div
+          animate={{
+            opacity: [0.2, 0.4, 0.2],
+            scale: [1.1, 1, 1.1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#009FDA]/10 blur-[120px] rounded-full"
+        />
+      </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Row 1: Nombre y Cédula */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="nombre"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-200">
-                        Nombre Completo *
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Juan Pérez"
-                          {...field}
-                          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                          disabled={loading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-12 md:py-20">
+        <AnimatePresence mode="wait">
+          {completado ? (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex flex-col items-center justify-center min-h-[70vh]"
+            >
+              <div className="relative mb-12">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", damping: 12, delay: 0.2 }}
+                  className="w-32 h-32 rounded-full bg-gradient-to-tr from-[#F5A623] to-[#FFC857] flex items-center justify-center shadow-[0_0_50px_rgba(245,166,35,0.4)]"
+                >
+                  <CheckCircle2 className="w-16 h-16 text-[#1A1A1A]" strokeWidth={2.5} />
+                </motion.div>
 
-                <FormField
-                  control={form.control}
-                  name="cedula"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-200">
-                        Cédula *{!cedulaDisponible && '(Ya existe)'}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="12345678"
-                          {...field}
-                          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                          disabled={loading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Row 2: Fecha Nacimiento y Edad */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="fecha_nacimiento"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-200">
-                        Fecha de Nacimiento *
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                          disabled={loading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="edad"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-200">Edad</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          className="bg-slate-700 border-slate-600 text-white"
-                          readOnly
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Celular */}
-              <FormField
-                control={form.control}
-                name="celular"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-200">
-                      Celular (+57) *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="300 1234567"
-                        {...field}
-                        className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                        disabled={loading}
-                      />
-                    </FormControl>
-                    <p className="text-xs text-slate-400">
-                      Formato: +57 con 10 dígitos
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Estados */}
-              <FormField
-                control={form.control}
-                name="estados"
-                render={() => (
-                  <FormItem>
-                    <FormLabel className="text-slate-200">
-                      Tu estado espiritual *
-                    </FormLabel>
-                    <div className="space-y-3 mt-3">
-                      {['Bautizado', 'Sellado', 'Servidor', 'Simpatizante'].map(
-                        (estado) => (
-                          <div key={estado} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={estado}
-                              checked={form.watch('estados').includes(estado)}
-                              onCheckedChange={(checked) => {
-                                const currentEstados = form.watch('estados')
-                                if (checked) {
-                                  form.setValue('estados', [
-                                    ...currentEstados,
-                                    estado,
-                                  ])
-                                } else {
-                                  form.setValue(
-                                    'estados',
-                                    currentEstados.filter((e) => e !== estado)
-                                  )
-                                }
-                              }}
-                              disabled={loading}
-                              className="border-slate-600"
-                            />
-                            <label
-                              htmlFor={estado}
-                              className="text-sm text-slate-300 cursor-pointer"
-                            >
-                              {estado}
-                            </label>
-                          </div>
-                        )
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Consentimientos */}
-              <div className="space-y-4 pt-4 border-t border-slate-700">
-                <h3 className="font-semibold text-white">Consentimientos *</h3>
-
-                {[
-                  {
-                    id: 'datos_personales' as const,
-                    label: 'Autorizo el tratamiento de mis datos personales',
-                  },
-                  {
-                    id: 'whatsapp' as const,
-                    label: 'Autorizo recibir mensajes por WhatsApp',
-                  },
-                  {
-                    id: 'procesamiento' as const,
-                    label: 'Autorizo el procesamiento de información',
-                  },
-                  {
-                    id: 'terminos' as const,
-                    label: 'Acepto los términos y condiciones',
-                  },
-                ].map((consent) => (
-                  <FormField
-                    key={consent.id}
-                    control={form.control}
-                    name={`consentimientos.${consent.id}`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-start space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={loading}
-                              className="border-slate-600 mt-1"
-                            />
-                          </FormControl>
-                          <label className="text-sm text-slate-300 cursor-pointer leading-relaxed">
-                            {consent.label}
-                          </label>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                {/* Decorative particles */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{
+                      opacity: [0, 1, 0],
+                      scale: [0, 1.5, 0],
+                      x: Math.cos(i * 45) * 100,
+                      y: Math.sin(i * 45) * 100
+                    }}
+                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.1 }}
+                    className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-[#F5A623]"
                   />
                 ))}
               </div>
 
-              {/* Submit */}
-              <Button
-                type="submit"
-                className="w-full bg-[#F5A623] hover:bg-[#e6951a] text-[#1A1A1A] font-semibold mt-6"
-                disabled={loading || !cedulaDisponible}
-              >
-                {loading ? 'Registrando...' : 'Registrarse'}
-              </Button>
-            </form>
-          </Form>
+              <h2 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter text-center">
+                ¡BIENVENIDO <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] to-[#FFC857]">CONQUISTADOR</span>!
+              </h2>
 
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-400">
-              ¿Ya tienes cuenta?{' '}
-              <Link href="/login" className="text-[#F5A623] hover:text-[#e6951a]">
-                Inicia sesión aquí
+              <p className="text-xl text-slate-400 text-center max-w-xl mb-12 leading-relaxed">
+                Tu registro ha sido procesado con éxito. Ahora formas parte de este gran ejército que conquista para Cristo.
+              </p>
+
+              <Link href="/">
+                <Button className="h-16 px-12 bg-white text-black hover:bg-slate-200 transition-all rounded-2xl font-black text-lg gap-2 group">
+                  EXPLORAR DASHBOARD
+                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
               </Link>
-            </p>
-          </div>
-        </Card>
+            </motion.div>
+          ) : (
+            <div className="grid lg:grid-cols-[1fr_1.5fr] gap-12 items-start">
+              {/* Left Column: Branding & Progress */}
+              <motion.div
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-12 sticky top-20"
+              >
+                <div className="space-y-6">
+                  <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
+                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                    <span className="font-bold tracking-wide uppercase text-xs">Volver al inicio</span>
+                  </Link>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#00338D] to-[#0066B3] rounded-2xl flex items-center justify-center border border-white/10 shadow-xl">
+                        <Flag className="w-6 h-6 text-white" />
+                      </div>
+                      <span className="text-[#F5A623] font-black tracking-widest text-sm uppercase">Edición 2025-2027</span>
+                    </div>
+                    <h1 className="text-6xl font-black tracking-tighter leading-tight">
+                      REGISTRO DE <br />
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#009FDA] via-[#0066B3] to-[#00338D]">NUEVO JOVEN</span>
+                    </h1>
+                  </div>
+
+                  <p className="text-lg text-slate-400 leading-relaxed max-w-md italic">
+                    "Ninguno tenga en poco tu juventud, sino sé ejemplo de los creyentes en palabra, conducta, amor, espíritu, fe y pureza."
+                    <span className="block mt-2 font-bold not-italic text-sm text-[#009FDA]">1 Timoteo 4:12</span>
+                  </p>
+                </div>
+
+                {/* Vertical Progress Steps */}
+                <div className="space-y-8 pl-4">
+                  {[
+                    { label: 'Información Básica', done: completedFields >= 2 },
+                    { label: 'Contacto y Edad', done: completedFields >= 4 },
+                    { label: 'Situación Espiritual', done: completedFields >= 5 },
+                    { label: 'Validación Legal', done: completedFields >= 6 },
+                  ].map((step, idx) => (
+                    <div key={idx} className="flex items-center gap-4 relative">
+                      {idx < 3 && (
+                        <div className={cn(
+                          "absolute left-4 top-10 w-0.5 h-6 transition-colors duration-500",
+                          step.done ? "bg-[#F5A623]" : "bg-white/10"
+                        )} />
+                      )}
+                      <div className={cn(
+                        "w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500",
+                        step.done
+                          ? "bg-[#F5A623] border-[#F5A623] shadow-[0_0_15px_rgba(245,166,35,0.4)]"
+                          : "border-white/20 bg-transparent"
+                      )}>
+                        {step.done ? <CheckCircle className="w-4 h-4 text-black" /> : <Circle className="w-4 h-4 text-white/20" />}
+                      </div>
+                      <span className={cn(
+                        "font-bold transition-colors duration-500",
+                        step.done ? "text-white" : "text-slate-500"
+                      )}>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Progress Wheel Info */}
+                <div className="p-6 rounded-[2rem] bg-gradient-to-br from-white/5 to-transparent border border-white/10 backdrop-blur-xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <Info className="w-12 h-12" />
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-bold uppercase tracking-wider text-slate-400">Completado</span>
+                    <span className="text-2xl font-black text-[#F5A623]">{completionPercentage}%</span>
+                  </div>
+                  <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${completionPercentage}%` }}
+                      className="h-full bg-gradient-to-r from-[#F5A623] to-[#FFC857] rounded-full shadow-[0_0_10px_rgba(245,166,35,0.5)]"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Right Column: Interactive Form */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card className="bg-white/[0.04] border-white/10 backdrop-blur-3xl rounded-[3rem] p-8 md:p-12 shadow-[0_40px_100px_rgba(0,0,0,0.4)] relative overflow-hidden">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+
+
+
+                      {/* Section: Legal */}
+                      <section className="space-y-6">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-[#00338D]/20 flex items-center justify-center border border-[#00338D]/20">
+                            <ShieldCheck className="w-5 h-5 text-[#0066B3]" />
+                          </div>
+                          <h3 className="text-xl font-black tracking-tight text-white uppercase">Validación y Consentimiento</h3>
+                        </div>
+
+                        <div className="p-6 rounded-3xl bg-white/[0.03] border border-white/5 space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="consentimientos.datos_personales"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center space-x-4 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    className="w-6 h-6 border-white/20 data-[state=checked]:bg-[#F5A623] data-[state=checked]:border-[#F5A623]"
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel className="text-sm font-bold text-slate-300 cursor-pointer hover:text-white transition-colors">
+                                    Autorizo el tratamiento de mis datos personales
+                                  </FormLabel>
+                                  <p className="text-[10px] text-slate-600 uppercase font-bold">Ley 1581 de 2012</p>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </section>
+
+                      {/* Final Action */}
+                      <div className="pt-6 relative">
+                        <div className="absolute inset-x-0 -top-8 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+                        <Button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full h-20 bg-[#F5A623] hover:bg-[#FFC857] text-[#1A1A1A] font-black text-xl rounded-2xl transition-all shadow-[0_15px_40px_rgba(245,166,35,0.3)] hover:shadow-[0_20px_50px_rgba(245,166,35,0.4)] disabled:opacity-30 flex items-center justify-center gap-4 group"
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="w-6 h-6 animate-spin" />
+                              PROCESANDO...
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-6 h-6" />
+                              COMPLETAR INSCRIPCIÓN
+                              <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                            </>
+                          )}
+                        </Button>
+
+                        <p className="mt-8 text-center text-slate-500 text-sm font-medium">
+                          ¿Ya estás registrado?{' '}
+                          <Link href="/login" className="text-[#009FDA] hover:text-white transition-colors font-black uppercase tracking-tighter underline underline-offset-4 decoration-2">
+                            Inicia Sesión aquí
+                          </Link>
+                        </p>
+                      </div>
+
+                    </form>
+                  </Form>
+                </Card>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* Footer Branding */}
+      <footer className="relative z-10 py-12 text-center border-t border-white/5">
+        <div className="flex flex-col items-center gap-4 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
+          <p className="text-[10px] font-black tracking-[0.4em] uppercase text-slate-500">
+            Conquistadores Pentecostales © 2025
+          </p>
+          <div className="flex gap-8 items-center">
+            <span className="w-12 h-px bg-white/20" />
+            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/10" />
+            <span className="w-12 h-px bg-white/20" />
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

@@ -46,6 +46,9 @@ export interface Grupo {
   nombre: string
   descripcion: string
   lider_id: string
+  lider?: {
+    nombre_completo: string
+  }
   created_at: string
   updated_at: string
 }

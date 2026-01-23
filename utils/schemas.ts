@@ -17,50 +17,26 @@ export type LoginFormType = z.infer<typeof loginSchema>
 // Registro Joven Schema
 export const registroJovenSchema = z
   .object({
-    nombre: z.string().min(3, 'Nombre debe tener al menos 3 caracteres'),
+    nombre_completo: z.string().min(3, 'Nombre must be at least 3 characters'),
     fecha_nacimiento: z.string().refine(
-      (date) => validatorsColombia.validateAgeRange(date),
-      'La edad debe estar entre 12 y 35 años'
+      (date: string) => validatorsColombia.validateAgeRange(date),
+      'Debes tener entre 12 y 35 años'
     ),
-    edad: z.number().int().min(12).max(35),
-    cedula: z
-      .string()
-      .refine(
-        (cedula) => validatorsColombia.validateCedula(cedula),
-        'Cédula inválida'
-      ),
+    edad: z.number().int().min(12, 'Mínimo 12 años').max(35, 'Máximo 35 años'),
     celular: z
       .string()
       .refine(
-        (celular) => validatorsColombia.validateCelular(celular),
-        'Celular inválido (ej: +57 300 1234567)'
+        (celular: string) => validatorsColombia.validateCelular(celular),
+        'Celular inválido (ej: 300 1234567)'
       ),
     estados: z.array(z.string()).min(1, 'Selecciona al menos un estado'),
     consentimientos: z.object({
-      datos_personales: z.boolean().refine((val) => val === true, {
-        message: 'Debes aceptar el consentimiento de datos personales',
-      }),
-      whatsapp: z.boolean().refine((val) => val === true, {
-        message: 'Debes aceptar el consentimiento de WhatsApp',
-      }),
-      procesamiento: z.boolean().refine((val) => val === true, {
-        message: 'Debes aceptar el consentimiento de procesamiento',
-      }),
-      terminos: z.boolean().refine((val) => val === true, {
-        message: 'Debes aceptar los términos y condiciones',
+      datos_personales: z.boolean().refine((val: boolean) => val === true, {
+        message: 'Debes aceptar el tratamiento de datos personales',
       }),
     }),
   })
-  .refine(
-    (data) => {
-      // Calculate age and verify it matches
-      const calculatedAge = validatorsColombia.calculateAge(data.fecha_nacimiento)
-      return calculatedAge === data.edad
-    },
-    {
-      message: 'La edad no coincide con la fecha de nacimiento',
-      path: ['edad'],
-    }
-  )
 
 export type RegistroJovenFormType = z.infer<typeof registroJovenSchema>
+
+

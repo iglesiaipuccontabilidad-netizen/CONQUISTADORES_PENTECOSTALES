@@ -15,10 +15,20 @@ const supabase = createClient(SUPABASE_URL || '', SUPABASE_SERVICE_ROLE_KEY || '
 // UTILIDADES
 // ============================================
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400',
+}
+
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders,
+    },
   })
 }
 
@@ -49,15 +59,18 @@ function validateCedula(cedula: string): boolean {
 // ============================================
 
 Deno.serve(async (req) => {
-  // CORS
+  // Log para debugging CORS
+  console.log('Request method:', req.method)
+  console.log('Request URL:', req.url)
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()))
+  console.log('Authorization header:', req.headers.get('Authorization'))
+
+  // CORS preflight request
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
+    console.log('Handling OPTIONS preflight')
+    return new Response('ok', {
+      status: 200,
+      headers: corsHeaders,
     })
   }
 
@@ -65,6 +78,8 @@ Deno.serve(async (req) => {
   const path = url.pathname
 
   try {
+    console.log(`\n📍 Incoming request: ${req.method} ${path}`)
+
     // LOGIN
     if (path.includes('auth/login') && req.method === 'POST') {
       const { email, password } = await req.json()
@@ -153,28 +168,20 @@ Deno.serve(async (req) => {
     if (path.includes('joven/registro') && req.method === 'POST') {
       const body = await req.json()
       const {
-        nombre_completo,
+        nombre,
         fecha_nacimiento,
-        cedula,
         celular,
-        grupo_id,
-        bautizado,
-        sellado,
-        servidor,
-        simpatizante,
-        consentimiento_datos_personales,
-        consentimiento_whatsapp,
-        consentimiento_procesamiento,
-        consentimiento_terminos,
+        estados,
+        consentimientos,
       } = body
 
-      // Validaciones
-      if (!nombre_completo?.trim() || nombre_completo.length < 3) {
+      // Validar datos básicos
+      if (!nombre?.trim() || nombre.length < 3) {
         return errorResponse('Nombre inválido', 400)
       }
 
-      if (!cedula || !validateCedula(cedula)) {
-        return errorResponse('Cédula inválida', 400)
+      if (!fecha_nacimiento) {
+        return errorResponse('Fecha de nacimiento requerida', 400)
       }
 
       if (!celular || !validateCelular(celular)) {
@@ -182,51 +189,35 @@ Deno.serve(async (req) => {
       }
 
       // Validar edad
-      const edad =
-        new Date().getFullYear() - new Date(fecha_nacimiento).getFullYear()
+      const edad = new Date().getFullYear() - new Date(fecha_nacimiento).getFullYear()
       if (edad < 12 || edad > 35) {
         return errorResponse('Edad debe estar entre 12-35 años', 400)
       }
 
-      // Validar consentimientos
-      if (
-        !consentimiento_datos_personales ||
-        !consentimiento_whatsapp ||
-        !consentimiento_procesamiento ||
-        !consentimiento_terminos
-      ) {
-        return errorResponse('Todos los consentimientos son requeridos', 400)
+      // Validar consentimientos - solo datos personales requerido
+      if (!consentimientos?.datos_personales) {
+        return errorResponse('Debes aceptar el tratamiento de datos personales', 400)
       }
 
-      // Verificar cédula única
-      const { data: existingJoven } = await supabase
-        .from('jovenes')
-        .select('id')
-        .eq('cedula', cedula)
-        .maybeSingle()
+      // Mapear estados a booleanos
+      const bautizado = estados?.includes('bautizado') || false
+      const sellado = estados?.includes('sellado') || false
+      const servidor = estados?.includes('servidor') || false
+      const simpatizante = estados?.includes('simpatizante') || false
 
-      if (existingJoven) {
-        return errorResponse('Cédula ya registrada', 409)
-      }
-
-      // Insertar joven
+      // Insertar joven con datos completos
       const { data: newJoven, error: insertError } = await supabase
         .from('jovenes')
         .insert([
           {
-            nombre_completo: nombre_completo.trim(),
+            nombre_completo: nombre.trim(),
             fecha_nacimiento,
-            cedula,
             celular,
-            grupo_id,
-            bautizado: bautizado || false,
-            sellado: sellado || false,
-            servidor: servidor || false,
-            simpatizante: simpatizante || false,
-            consentimiento_datos_personales,
-            consentimiento_whatsapp,
-            consentimiento_procesamiento,
-            consentimiento_terminos,
+            bautizado,
+            sellado,
+            servidor,
+            simpatizante,
+            consentimiento_datos_personales: consentimientos.datos_personales,
             estado: 'activo',
           },
         ])
@@ -237,7 +228,7 @@ Deno.serve(async (req) => {
         return errorResponse('Error al registrar joven', 500)
       }
 
-      // Log activity
+      // Log activity (sin usuario autenticado)
       await supabase.rpc('log_activity', {
         p_usuario_id: '00000000-0000-0000-0000-000000000000',
         p_accion: 'CREATE',
@@ -255,31 +246,63 @@ Deno.serve(async (req) => {
       )
     }
 
-    // VALIDAR CÉDULA
-    if (path.includes('joven/cedula') && req.method === 'GET') {
-      const cedula = path.split('/').pop()
 
-      if (!cedula || !validateCedula(cedula)) {
-        return errorResponse('Cédula inválida', 400)
+
+    // GET /api/jovenes/:id - VER DETALLES DE UN JOVEN
+    if (path.includes('/jovenes/') && !path.includes('/search') && req.method === 'GET') {
+      const joven_id = path.split('/').pop()
+      console.log('✅ Matched Detail View for ID:', joven_id)
+      const authHeader = req.headers.get('Authorization')
+      console.log('🔑 Auth Header:', authHeader ? 'Present' : 'Missing')
+      const token = authHeader?.split('Bearer ')[1]
+
+      if (!token) {
+        console.log('❌ No token provided in request')
+        return errorResponse('Autenticación requerida', 401)
       }
 
-      const { data: existingJoven } = await supabase
-        .from('jovenes')
-        .select('id')
-        .eq('cedula', cedula)
-        .maybeSingle()
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+      if (authError || !user) {
+        console.log('❌ Auth error or no user found for token:', authError)
+        return errorResponse('Token inválido', 401)
+      }
+      console.log('👤 Authenticated user:', user.email)
 
+      const { data: joven, error } = await supabase
+        .from('jovenes')
+        .select('*, grupo:grupos(id, nombre)')
+        .eq('id', joven_id)
+        .single()
+
+      if (error || !joven) {
+        console.log('❌ Joven not found:', error)
+        return errorResponse('Joven no encontrado', 404)
+      }
+
+      // Calcular edad si no está en la base de datos o asegurar valor
+      if (joven.fecha_nacimiento && !joven.edad) {
+        const birthDate = new Date(joven.fecha_nacimiento);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        joven.edad = age;
+      }
+
+      console.log('✅ Returning joven:', joven?.nombre_completo)
       return jsonResponse({
         status: 'success',
-        cedula,
-        existe: !!existingJoven,
+        joven,
       })
     }
 
     // GET /api/jovenes - LISTAR TODOS LOS JÓVENES
-    if (path.includes('/api/jovenes') && !path.includes('/cedula') && req.method === 'GET') {
+    if (path.match(/\/jovenes(\/)?$/) && req.method === 'GET') {
+      console.log('✅ Matched GET /jovenes (list)')
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
-      
+
       if (!token) {
         return errorResponse('Autenticación requerida', 401)
       }
@@ -303,7 +326,7 @@ Deno.serve(async (req) => {
 
       let query = supabase
         .from('jovenes')
-        .select('id, nombre_completo, fecha_nacimiento, cedula, celular, grupo_id, estado, bautizado, sellado, servidor, simpatizante, created_at')
+        .select('id, nombre_completo, fecha_nacimiento, celular, grupo_id, estado, bautizado, sellado, servidor, simpatizante, created_at')
         .eq('estado', 'activo')
         .order('nombre_completo')
 
@@ -333,38 +356,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    // GET /api/jovenes/:id - VER DETALLES DE UN JOVEN
-    if (path.match(/\/api\/jovenes\/[a-f0-9-]+$/) && req.method === 'GET') {
-      const joven_id = path.split('/').pop()
-      const token = req.headers.get('Authorization')?.split('Bearer ')[1]
-
-      if (!token) {
-        return errorResponse('Autenticación requerida', 401)
-      }
-
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-      if (authError || !user) {
-        return errorResponse('Token inválido', 401)
-      }
-
-      const { data: joven, error } = await supabase
-        .from('jovenes')
-        .select('*')
-        .eq('id', joven_id)
-        .single()
-
-      if (error || !joven) {
-        return errorResponse('Joven no encontrado', 404)
-      }
-
-      return jsonResponse({
-        status: 'success',
-        joven,
-      })
-    }
-
     // POST /api/grupos - CREAR NUEVO GRUPO
-    if (path.includes('/api/grupos') && req.method === 'POST') {
+    if ((path.includes('/api/grupos') || path.includes('/auth/grupos')) && req.method === 'POST') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {
@@ -444,7 +437,7 @@ Deno.serve(async (req) => {
     }
 
     // GET /api/dashboard/metrics - ESTADÍSTICAS
-    if (path.includes('/api/dashboard/metrics') && req.method === 'GET') {
+    if ((path.includes('/api/dashboard/metrics') || path.includes('/auth/dashboard/metrics')) && req.method === 'GET') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {
@@ -505,7 +498,7 @@ Deno.serve(async (req) => {
     }
 
     // PUT /api/jovenes/:id - ACTUALIZAR JOVEN
-    if (path.match(/\/api\/jovenes\/[a-f0-9-]+$/) && req.method === 'PUT') {
+    if (path.match(/\/jovenes\/[a-f0-9-]+$/) && req.method === 'PUT') {
       const joven_id = path.split('/').pop()
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
@@ -558,7 +551,7 @@ Deno.serve(async (req) => {
     }
 
     // DELETE /api/jovenes/:id - ELIMINAR JOVEN
-    if (path.match(/\/api\/jovenes\/[a-f0-9-]+$/) && req.method === 'DELETE') {
+    if (path.match(/\/jovenes\/[a-f0-9-]+$/) && req.method === 'DELETE') {
       const joven_id = path.split('/').pop()
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
@@ -608,7 +601,7 @@ Deno.serve(async (req) => {
     }
 
     // GET /api/grupos - LISTAR GRUPOS
-    if (path.includes('/api/grupos') && !path.includes('/cedula') && req.method === 'GET') {
+    if ((path.includes('/api/grupos') || path.includes('/auth/grupos')) && !path.includes('/cedula') && req.method === 'GET') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {
@@ -638,7 +631,7 @@ Deno.serve(async (req) => {
     }
 
     // GET /api/usuarios - LISTAR USUARIOS CON FILTROS
-    if (path.includes('/api/usuarios') && !path.includes('/cedula') && req.method === 'GET') {
+    if ((path.includes('/api/usuarios') || path.includes('/auth/usuarios')) && !path.includes('/cedula') && req.method === 'GET') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {
@@ -704,7 +697,7 @@ Deno.serve(async (req) => {
     }
 
     // GET /api/usuarios/:id - VER DETALLES DE UN USUARIO
-    if (path.match(/\/api\/usuarios\/[a-f0-9-]+$/) && req.method === 'GET') {
+    if (path.match(/\/(api|auth)\/usuarios\/[a-f0-9-]+$/) && req.method === 'GET') {
       const usuario_id = path.split('/').pop()
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
@@ -745,7 +738,7 @@ Deno.serve(async (req) => {
     }
 
     // POST /api/usuarios - CREAR USUARIO MANUAL
-    if (path.includes('/api/usuarios') && !path.includes('/cedula') && req.method === 'POST') {
+    if ((path.includes('/api/usuarios') || path.includes('/auth/usuarios')) && !path.includes('/cedula') && req.method === 'POST') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {
@@ -837,7 +830,7 @@ Deno.serve(async (req) => {
     }
 
     // PUT /api/usuarios/:id - ACTUALIZAR USUARIO
-    if (path.match(/\/api\/usuarios\/[a-f0-9-]+$/) && req.method === 'PUT') {
+    if (path.match(/\/(api|auth)\/usuarios\/[a-f0-9-]+$/) && req.method === 'PUT') {
       const usuario_id = path.split('/').pop()
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
@@ -890,7 +883,7 @@ Deno.serve(async (req) => {
     }
 
     // DELETE /api/usuarios/:id - ELIMINAR USUARIO
-    if (path.match(/\/api\/usuarios\/[a-f0-9-]+$/) && req.method === 'DELETE') {
+    if (path.match(/\/(api|auth)\/usuarios\/[a-f0-9-]+$/) && req.method === 'DELETE') {
       const usuario_id = path.split('/').pop()
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
@@ -940,7 +933,7 @@ Deno.serve(async (req) => {
     }
 
     // GET /api/jovenes/search - BÚSQUEDA AVANZADA
-    if (path.includes('/api/jovenes/search') && req.method === 'GET') {
+    if (path.includes('/jovenes/search') && req.method === 'GET') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {
@@ -964,12 +957,12 @@ Deno.serve(async (req) => {
 
       let query = supabase
         .from('jovenes')
-        .select('id, nombre_completo, cedula, celular, fecha_nacimiento, grupo_id, bautizado, sellado, servidor, simpatizante, estado, created_at', { count: 'exact' })
+        .select('id, nombre_completo, celular, fecha_nacimiento, grupo_id, bautizado, sellado, servidor, simpatizante, estado, created_at', { count: 'exact' })
         .eq('estado', 'activo')
 
-      // Búsqueda por nombre o cédula
+      // Búsqueda por nombre o celular
       if (search) {
-        query = query.or(`nombre_completo.ilike.%${search}%,cedula.ilike.%${search}%,celular.ilike.%${search}%`)
+        query = query.or(`nombre_completo.ilike.%${search}%,celular.ilike.%${search}%`)
       }
 
       // Filtro por grupo
@@ -1012,7 +1005,7 @@ Deno.serve(async (req) => {
     }
 
     // GET /api/configuracion - OBTENER CONFIGURACIÓN DEL SISTEMA
-    if (path.includes('/api/configuracion') && req.method === 'GET') {
+    if (path.includes('/configuracion') && req.method === 'GET') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {
@@ -1061,7 +1054,7 @@ Deno.serve(async (req) => {
     }
 
     // PUT /api/configuracion - ACTUALIZAR CONFIGURACIÓN DEL SISTEMA
-    if (path.includes('/api/configuracion') && req.method === 'PUT') {
+    if (path.includes('/configuracion') && req.method === 'PUT') {
       const token = req.headers.get('Authorization')?.split('Bearer ')[1]
 
       if (!token) {

@@ -252,3 +252,179 @@ CREATE TRIGGER trigger_configuracion_sistema_updated_at BEFORE UPDATE ON configu
 
 CREATE TRIGGER trigger_notificaciones_updated_at BEFORE UPDATE ON notificaciones
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ========================================
+-- TABLA: logs_actividad (auditoría)
+-- ========================================
+CREATE TABLE IF NOT EXISTS logs_actividad (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  accion VARCHAR(50) NOT NULL, -- CREATE, UPDATE, DELETE, LOGIN, etc.
+  tabla_afectada VARCHAR(100) NOT NULL,
+  registro_id UUID,
+  detalles JSONB,
+  ip_address INET,
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ========================================
+-- FUNCIONES DE LOGGING
+-- ========================================
+
+-- Función para log de actividad general
+CREATE OR REPLACE FUNCTION log_activity(
+  p_usuario_id UUID,
+  p_accion VARCHAR(50),
+  p_tabla_afectada VARCHAR(100),
+  p_registro_id UUID DEFAULT NULL,
+  p_detalles JSONB DEFAULT NULL
+)
+RETURNS VOID AS $$
+BEGIN
+  INSERT INTO logs_actividad (
+    usuario_id,
+    accion,
+    tabla_afectada,
+    registro_id,
+    detalles
+  ) VALUES (
+    p_usuario_id,
+    p_accion,
+    p_tabla_afectada,
+    p_registro_id,
+    p_detalles
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Función para log de eliminaciones
+CREATE OR REPLACE FUNCTION log_deletion(
+  p_usuario_id UUID,
+  p_tabla_afectada VARCHAR(100),
+  p_registro_id UUID,
+  p_detalles JSONB DEFAULT NULL
+)
+RETURNS VOID AS $$
+BEGIN
+  INSERT INTO logs_actividad (
+    usuario_id,
+    accion,
+    tabla_afectada,
+    registro_id,
+    detalles
+  ) VALUES (
+    p_usuario_id,
+    'DELETE',
+    p_tabla_afectada,
+    p_registro_id,
+    p_detalles
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ========================================
+-- POLÍTICAS RLS (Row Level Security)
+-- ========================================
+
+-- Habilitar RLS en todas las tablas
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE grupos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jovenes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mensajes_cumpleanos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plantillas_mensajes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE versiculos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE configuracion_sistema ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notificaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE logs_actividad ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para users
+CREATE POLICY "Users can view their own data" ON users
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Admins can view all users" ON users
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND rol = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can update users" ON users
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND rol = 'admin'
+    )
+  );
+
+-- Políticas para jovenes (todos pueden ver, solo admins pueden modificar)
+CREATE POLICY "Anyone can view active jovenes" ON jovenes
+  FOR SELECT USING (estado = 'activo');
+
+CREATE POLICY "Admins can manage jovenes" ON jovenes
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND rol = 'admin'
+    )
+  );
+
+-- Políticas para grupos
+CREATE POLICY "Active groups are viewable by authenticated users" ON grupos
+  FOR SELECT USING (estado = 'activo' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Group leaders and admins can manage groups" ON grupos
+  FOR ALL USING (
+    lider_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND rol IN ('admin', 'lider')
+    )
+  );
+
+-- Políticas para logs_actividad (solo admins)
+CREATE POLICY "Only admins can view activity logs" ON logs_actividad
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid() AND rol = 'admin'
+    )
+  );
+
+-- ========================================
+-- ÍNDICES PARA MEJOR PERFORMANCE
+-- ========================================
+
+CREATE INDEX IF NOT EXISTS idx_jovenes_estado ON jovenes(estado);
+CREATE INDEX IF NOT EXISTS idx_jovenes_fecha_nacimiento ON jovenes(fecha_nacimiento);
+CREATE INDEX IF NOT EXISTS idx_jovenes_celular ON jovenes(celular);
+CREATE INDEX IF NOT EXISTS idx_grupos_estado ON grupos(estado);
+CREATE INDEX IF NOT EXISTS idx_grupos_lider ON grupos(lider_id);
+CREATE INDEX IF NOT EXISTS idx_logs_actividad_usuario ON logs_actividad(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_logs_actividad_tabla ON logs_actividad(tabla_afectada);
+CREATE INDEX IF NOT EXISTS idx_logs_actividad_created_at ON logs_actividad(created_at);
+
+-- ========================================
+-- DATOS INICIALES
+-- ========================================
+
+-- Insertar configuración inicial del sistema
+INSERT INTO configuracion_sistema (clave, valor, descripcion)
+VALUES
+  ('app_name', '"Conquistadores App"', 'Nombre de la aplicación'),
+  ('app_version', '"1.0.0"', 'Versión actual de la aplicación'),
+  ('max_jovenes_por_grupo', '50', 'Máximo número de jóvenes por grupo'),
+  ('edad_minima', '12', 'Edad mínima para registro'),
+  ('edad_maxima', '35', 'Edad máxima para registro')
+ON CONFLICT (clave) DO NOTHING;
+
+-- Insertar versículos bíblicos iniciales
+INSERT INTO versiculos (referencia, texto, categoria)
+VALUES
+  ('Jeremías 29:11', 'Porque yo sé los pensamientos que tengo acerca de vosotros, dice Jehová, pensamientos de paz, y no de mal, para daros el fin que esperáis.', 'promesa'),
+  ('Filipenses 4:13', 'Todo lo puedo en Cristo que me fortalece.', 'fuerza'),
+  ('Proverbios 3:5-6', 'Fíate de Jehová de todo tu corazón, y no te apoyes en tu propia prudencia. Reconócelo en todos tus caminos, y él enderezará tus veredas.', 'sabiduria'),
+  ('Salmos 37:4', 'Deléitate asimismo en Jehová, y él te concederá las peticiones de tu corazón.', 'promesa'),
+  ('Josué 1:9', 'Mira que te mando que te esfuerces y seas valiente; no temas ni desmayes, porque Jehová tu Dios estará contigo en dondequiera que vayas.', 'valentia')
+ON CONFLICT (referencia) DO NOTHING;

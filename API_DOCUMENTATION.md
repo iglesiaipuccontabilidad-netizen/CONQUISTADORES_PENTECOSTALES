@@ -131,17 +131,13 @@ curl -X POST https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/re
   -d '{
     "nombre_completo": "Maria García López",
     "fecha_nacimiento": "2010-05-15",
-    "cedula": "12345678",
     "celular": "+573001234567",
     "grupo_id": "uuid-or-null",
     "bautizado": false,
     "sellado": true,
     "servidor": false,
     "simpatizante": true,
-    "consentimiento_datos_personales": true,
-    "consentimiento_whatsapp": true,
-    "consentimiento_procesamiento": true,
-    "consentimiento_terminos": true
+    "consentimiento_datos_personales": true
   }'
 ```
 
@@ -150,17 +146,13 @@ curl -X POST https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/re
 {
   "nombre_completo": "string (required, min 3 chars)",
   "fecha_nacimiento": "date (required, ISO 8601)",
-  "cedula": "string (required, 8-10 digits, UNIQUE)",
   "celular": "string (required, format: +57XXXXXXXXXX)",
   "grupo_id": "uuid (optional, auto-assign if not provided)",
   "bautizado": "boolean (optional, default: false)",
   "sellado": "boolean (optional, default: false)",
   "servidor": "boolean (optional, default: false)",
   "simpatizante": "boolean (optional, default: false)",
-  "consentimiento_datos_personales": "boolean (required)",
-  "consentimiento_whatsapp": "boolean (required)",
-  "consentimiento_procesamiento": "boolean (required)",
-  "consentimiento_terminos": "boolean (required)"
+  "consentimiento_datos_personales": "boolean (required)"
 }
 ```
 
@@ -182,9 +174,6 @@ curl -X POST https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/re
     "servidor": false,
     "simpatizante": true,
     "consentimiento_datos_personales": true,
-    "consentimiento_whatsapp": true,
-    "consentimiento_procesamiento": true,
-    "consentimiento_terminos": true,
     "estado": "activo",
     "created_at": "2026-01-19T10:30:00Z",
     "updated_at": "2026-01-19T10:30:00Z"
@@ -194,48 +183,10 @@ curl -X POST https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/re
 
 **Errors**:
 - `400`: Nombre inválido (< 3 caracteres)
-- `400`: Cédula inválida (formato)
 - `400`: Celular inválido (debe ser +57XXXXXXXXXX)
 - `400`: Edad fuera de rango (debe estar entre 12-35 años)
 - `400`: Consentimientos incompletos (todos requeridos)
-- `409`: Cédula ya registrada
 - `500`: Error al registrar joven
-
----
-
-### 5. **GET /api/joven/cedula/{cedula}** - Validar Cédula Única 🔍
-**Descripción**: Valida si una cédula ya está registrada (útil para validación en tiempo real)
-
-**Request**:
-```bash
-curl -X GET "https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/cedula/12345678"
-```
-
-**URL Parameters**:
-```
-cedula: string (required, 8-10 digits)
-```
-
-**Response (200)**:
-```json
-{
-  "status": "success",
-  "cedula": "12345678",
-  "existe": false
-}
-```
-
-**Response si existe (200)**:
-```json
-{
-  "status": "success",
-  "cedula": "12345678",
-  "existe": true
-}
-```
-
-**Errors**:
-- `400`: Cédula inválida
 
 ---
 
