@@ -18,8 +18,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useAuth } from '@/hooks/useAuth'
-import { loginSchema, LoginFormType } from '@/utils/schemas'
+import { useAuth } from '../../hooks/useAuth'
+import { loginSchema, LoginFormType } from '../../utils/schemas'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 

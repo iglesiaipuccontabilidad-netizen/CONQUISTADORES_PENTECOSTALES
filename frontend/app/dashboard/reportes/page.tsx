@@ -47,7 +47,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useCumpleanos } from '@/hooks/useCumpleanos';
+import { useCumpleanos } from '../../../hooks/useCumpleanos';
 
 // Mock data
 const mockReportes = {

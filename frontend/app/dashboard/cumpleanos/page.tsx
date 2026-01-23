@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Gift, Send, Cake, ChevronRight, User, Phone, Search, PartyPopper, Bell, Clock } from 'lucide-react';
-import { useCumpleanos } from '@/hooks/useCumpleanos';
+import { useCumpleanos } from '../../../hooks/useCumpleanos';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 

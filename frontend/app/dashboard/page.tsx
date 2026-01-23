@@ -3,8 +3,8 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { useJovenes } from '@/hooks/useJovenes';
-import { useAuth } from '@/hooks/useAuth';
+import { useJovenes } from '../../../hooks/useJovenes';
+import { useAuth } from '../../../hooks/useAuth';
 import {
   Users,
   TrendingUp,
@@ -38,7 +38,7 @@ import {
 } from 'recharts';
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { validatorsColombia } from '@/utils/validators';
+import { validatorsColombia } from '../../utils/validators';
 
 export default function DashboardPage() {
   const { jovenes, isLoading } = useJovenes();

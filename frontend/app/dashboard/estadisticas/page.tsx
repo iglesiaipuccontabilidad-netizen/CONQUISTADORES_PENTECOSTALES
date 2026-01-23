@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useJovenes } from '@/hooks/useJovenes';
+import { useJovenes } from '../../../hooks/useJovenes';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -19,7 +19,7 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { validatorsColombia } from '@/utils/validators';
+import { validatorsColombia } from '../../../utils/validators';
 
 export default function EstadisticasPage() {
   const { jovenes, isLoading } = useJovenes();
