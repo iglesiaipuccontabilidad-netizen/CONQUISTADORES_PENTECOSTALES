@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '../../components/ui/button';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import {
   LogOut,
   Home,
@@ -19,7 +19,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '../../../lib/utils';
+import { cn } from '@/lib/utils';
 
 export interface SidebarProps {
   onClose?: () => void;

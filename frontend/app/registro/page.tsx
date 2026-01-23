@@ -18,9 +18,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { registroJovenSchema, RegistroJovenFormType } from '../../../utils/schemas'
-import { validatorsColombia } from '../../../utils/validators'
-import apiClient from '../../../utils/api-client'
+import { registroJovenSchema, RegistroJovenFormType } from '@/utils/schemas'
+import { validatorsColombia } from '@/utils/validators'
+import apiClient from '@/utils/api-client'
 import { toast } from 'sonner'
 import {
   ArrowLeft,

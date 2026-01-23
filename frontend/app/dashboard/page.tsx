@@ -3,8 +3,8 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { useJovenes } from '../../../hooks/useJovenes';
-import { useAuth } from '../../../hooks/useAuth';
+import { useJovenes } from '@/hooks/useJovenes';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Users,
   TrendingUp,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useJovenes } from '../../../hooks/useJovenes';
+import { useJovenes } from '@/hooks/useJovenes';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
