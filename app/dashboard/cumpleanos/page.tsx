@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Gift, Send, Cake, User, Phone, Search, PartyPopper, Bell, Clock } from 'lucide-react';
-import { useCumpleanos } from '@/hooks/useCumpleanos';
+import { useCumpleanos, type CumpleanosDetalle } from '@/hooks/useCumpleanos';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Joven } from '@/types';
@@ -23,8 +23,8 @@ export default function CumpleanosPage() {
 
   const handleTabClick = (id: string) => setActiveTab(id);
 
-  const handleEnviarFelicitacion = (joven: any) => {
-    const message = encodeURIComponent(`¡Hola ${joven.nombre_completo}! 🎉 Que Dios te bendiga grandemente en este día de tu cumpleaños. Te deseamos lo mejor desde IPUC Conquistadores. 🙏🎂`);
+  const handleEnviarFelicitacion = (joven: CumpleanosDetalle) => {
+    const message = encodeURIComponent(`¡Hola ${joven.nombre_completo}! Que Dios te bendiga grandemente en este día de tu cumpleaños. Te deseamos lo mejor, de parte de los Jóvenes de la IPUC Tercera.`);
     window.open(`https://wa.me/${joven.celular}?text=${message}`, '_blank');
   };
 
@@ -271,7 +271,7 @@ export default function CumpleanosPage() {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-10 rounded-xl hover:bg-blue-50 hover:text-blue-600 font-bold px-4" onClick={() => handleEnviarFelicitacion(joven)}>
+                    <Button variant="ghost" size="sm" className="h-10 rounded-xl hover:bg-blue-50 hover:text-blue-600 font-bold px-4" disabled>
                       <Clock size={16} className="mr-2" />
                       Programar
                     </Button>
@@ -287,8 +287,8 @@ export default function CumpleanosPage() {
 }
 
 interface BirthdayCardProps {
-  joven: any;
-  onAction: (joven: any) => void;
+  joven: CumpleanosDetalle;
+  onAction: (joven: CumpleanosDetalle) => void;
   variant?: 'today' | 'upcoming';
 }
 
@@ -345,7 +345,7 @@ function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps)
           </div>
 
           <Button
-            onClick={onAction}
+            onClick={() => onAction(joven)}
             className={cn(
               "w-full h-12 rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg transition-all",
               isToday
@@ -365,7 +365,7 @@ function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps)
 interface MiniStatCardProps {
   label: string;
   value: number;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   color: string;
 }
 
@@ -389,7 +389,7 @@ function MiniStatCard({ label, value, icon: Icon, color }: MiniStatCardProps) {
   );
 }
 
-const StarIcon = (props: any) => (
+const StarIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
     xmlns="http://www.w3.org/2000/svg"

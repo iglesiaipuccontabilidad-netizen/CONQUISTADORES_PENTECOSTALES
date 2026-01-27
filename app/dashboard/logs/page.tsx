@@ -37,8 +37,30 @@ import {
   Download
 } from 'lucide-react';
 
+// Types
+interface ActivityLog {
+  id: string;
+  usuario: string;
+  accion: string;
+  tabla: string;
+  registro_id: string;
+  fecha: string;
+  ip: string;
+  detalles: Record<string, string | number | boolean>;
+}
+
+interface DeletionLog {
+  id: string;
+  tabla: string;
+  registro_id: string;
+  eliminado_por: string;
+  motivo: string;
+  fecha: string;
+  datos_eliminados: Record<string, string | number | boolean>;
+}
+
 // Mock data
-const mockActivityLogs = [
+const mockActivityLogs: ActivityLog[] = [
   {
     id: '1',
     usuario: 'admin@conquistadores.org',
@@ -93,7 +115,7 @@ export default function LogsPage() {
   const [usuarioFilter, setUsuarioFilter] = useState('todos');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [selectedLog, setSelectedLog] = useState<ActivityLog | DeletionLog | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   // Mock loading
@@ -125,7 +147,7 @@ export default function LogsPage() {
     return <Badge variant={variants[accion as keyof typeof variants] || 'outline'}>{accion}</Badge>;
   };
 
-  const handleViewDetails = (log: any) => {
+  const handleViewDetails = (log: ActivityLog | DeletionLog) => {
     setSelectedLog(log);
     setDetailsDialogOpen(true);
   };
@@ -301,45 +323,84 @@ export default function LogsPage() {
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Detalles de la Actividad</DialogTitle>
+            <DialogTitle>
+              {selectedLog && 'usuario' in selectedLog ? 'Detalles de la Actividad' : 'Detalles de Eliminación'}
+            </DialogTitle>
             <DialogDescription>
               Información completa de la acción realizada
             </DialogDescription>
           </DialogHeader>
           {selectedLog && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="font-medium text-slate-700">Usuario</p>
-                  <p>{selectedLog.usuario}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">Acción</p>
-                  <p>{selectedLog.accion}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">Tabla</p>
-                  <p>{selectedLog.tabla}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">ID Registro</p>
-                  <p>{selectedLog.registro_id}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">Fecha</p>
-                  <p>{selectedLog.fecha}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-slate-700">IP</p>
-                  <p className="font-mono">{selectedLog.ip}</p>
-                </div>
-              </div>
-              <div>
-                <p className="font-medium text-slate-700 mb-2">Detalles</p>
-                <pre className="bg-slate-100 p-3 rounded text-sm overflow-x-auto">
-                  {JSON.stringify(selectedLog.detalles, null, 2)}
-                </pre>
-              </div>
+              {'usuario' in selectedLog ? (
+                // Activity Log
+                <>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="font-medium text-slate-700">Usuario</p>
+                      <p>{selectedLog.usuario}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">Acción</p>
+                      <p>{selectedLog.accion}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">Tabla</p>
+                      <p>{selectedLog.tabla}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">ID Registro</p>
+                      <p>{selectedLog.registro_id}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">Fecha</p>
+                      <p>{selectedLog.fecha}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">IP</p>
+                      <p className="font-mono">{selectedLog.ip}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-700 mb-2">Detalles</p>
+                    <pre className="bg-slate-100 p-3 rounded text-sm overflow-x-auto">
+                      {JSON.stringify(selectedLog.detalles, null, 2)}
+                    </pre>
+                  </div>
+                </>
+              ) : (
+                // Deletion Log
+                <>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="font-medium text-slate-700">Eliminado por</p>
+                      <p>{selectedLog.eliminado_por}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">Tabla</p>
+                      <p>{selectedLog.tabla}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">ID Registro</p>
+                      <p>{selectedLog.registro_id}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-700">Fecha</p>
+                      <p>{selectedLog.fecha}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="font-medium text-slate-700">Motivo</p>
+                      <p>{selectedLog.motivo}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-700 mb-2">Datos Eliminados</p>
+                    <pre className="bg-slate-100 p-3 rounded text-sm overflow-x-auto">
+                      {JSON.stringify(selectedLog.datos_eliminados, null, 2)}
+                    </pre>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </DialogContent>

@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '../utils/api-client'
 import type { Joven } from '../types'
+import type { ApiResponse } from '../types/index'
 
 export interface CumpleanosHoy {
   jovenes: Joven[]
@@ -34,6 +35,17 @@ export interface CumpleanosProximos30 {
   nombre_completo: string
   fecha_nacimiento: string
   dias: number
+}
+
+export interface UseCumpleanosReturn {
+  isLoading: boolean
+  error: Error | null
+  cumpleanosHoy: CumpleanosDetalle[]
+  cumpleanosSemana: CumpleanosPorDia[]
+  estadisticasMes: CumpleanosStats
+  jovenesPorMes: CumpleanosDetalle[]
+  proximos30: CumpleanosProximos30[]
+  totalJovenes: number
 }
 
 const calculateAge = (birthDate: string): number => {
@@ -133,6 +145,30 @@ const getEstadisticasMes = (jovenes: Joven[]): CumpleanosStats => {
   }
 }
 
+const getJovenesPorMes = (jovenes: Joven[]): CumpleanosDetalle[] => {
+  const today = new Date()
+  const mesActual = today.getMonth()
+
+  return jovenes
+    .filter((joven) => {
+      if (!joven.fecha_nacimiento) return false
+      const birth = new Date(joven.fecha_nacimiento)
+      return birth.getMonth() === mesActual
+    })
+    .map((joven) => ({
+      id: joven.id,
+      nombre_completo: joven.nombre_completo,
+      edad: calculateAge(joven.fecha_nacimiento),
+      celular: joven.celular,
+      fecha_nacimiento: joven.fecha_nacimiento,
+    }))
+    .sort((a, b) => {
+      const dateA = new Date(a.fecha_nacimiento)
+      const dateB = new Date(b.fecha_nacimiento)
+      return dateA.getDate() - dateB.getDate()
+    })
+}
+
 const getProximos30Dias = (jovenes: Joven[]): CumpleanosProximos30[] => {
   const today = new Date()
   const diasProximos: CumpleanosProximos30[] = []
@@ -173,8 +209,8 @@ export const useCumpleanos = () => {
   const { data: jovenes = [], isLoading, error } = useQuery<Joven[]>({
     queryKey: ['cumpleanos-jovenes'],
     queryFn: async () => {
-      const { data } = await apiClient.get<unknown>('/jovenes')
-      return (data as any).jovenes || (data as any).data || []
+      const response = await apiClient.get<ApiResponse<Joven[]>>('/jovenes')
+      return response.data?.data || []
     },
   })
 
@@ -182,6 +218,7 @@ export const useCumpleanos = () => {
   const cumpleanosHoy = getJovenesParaHoy(jovenes)
   const cumpleanosSemana = getJovenesParaLaSemana(jovenes)
   const estadisticasMes = getEstadisticasMes(jovenes)
+  const jovenesPorMes = getJovenesPorMes(jovenes)
   const proximos30 = getProximos30Dias(jovenes)
 
   return {
@@ -190,6 +227,7 @@ export const useCumpleanos = () => {
     cumpleanosHoy,
     cumpleanosSemana,
     estadisticasMes,
+    jovenesPorMes,
     proximos30,
     totalJovenes: jovenes.length,
   }

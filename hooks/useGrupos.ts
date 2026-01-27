@@ -11,8 +11,8 @@ export const useGrupos = () => {
   const { data: grupos, isLoading, error } = useQuery<Grupo[]>({
     queryKey: ['grupos'],
     queryFn: async () => {
-      const { data } = await apiClient.get<unknown>('/grupos')
-      return (data as any).grupos || (data as any).data || []
+      const response = await apiClient.get<ApiResponse<Grupo[]>>('/grupos')
+      return response.data?.data || []
     },
   })
 
@@ -22,21 +22,18 @@ export const useGrupos = () => {
       queryFn: async () => {
         try {
           console.log('🔍 Fetching grupo details for id:', id)
-          const { data } = await apiClient.get<unknown>(`/grupos/${id}`)
-          console.log('📡 API Response:', data)
+          const response = await apiClient.get<ApiResponse<Grupo>>(`/grupos/${id}`)
+          console.log('📡 API Response:', response.data)
 
-          // La API devuelve { status: 'success', grupo: { ... } }
-          if ((data as any)?.status === 'success' && (data as any)?.grupo) {
-            console.log('✅ Found grupo:', (data as any).grupo)
-            return (data as any).grupo as Grupo
+          // La API devuelve { success: true, data: { ... } }
+          if (response.data?.success && response.data?.data) {
+            console.log('✅ Found grupo:', response.data.data)
+            return response.data.data
           }
 
-          // Fallback para otras estructuras
-          const result = (data as any)?.grupo || (data as any)?.data || ((data as any) && !(data as any).status ? (data as any) : null)
-          console.log('✅ Extracted result:', result)
-          return result as Grupo | null
+          return null
         } catch (error: unknown) {
-          console.error('❌ Error fetching grupo details:', (error as any)?.response?.data || (error as any)?.message || error)
+          console.error('❌ Error fetching grupo details:', error)
           return null
         }
       },

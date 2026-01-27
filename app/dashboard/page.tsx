@@ -38,6 +38,23 @@ import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { validatorsColombia } from '../../utils/validators';
 
+interface StatCardProps {
+  title: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  color: 'blue' | 'indigo' | 'violet' | 'rose';
+  trend: string;
+  label: string;
+}
+
+interface EventItemProps {
+  title: string;
+  date: string;
+  type: 'meeting' | 'vigil' | 'birthday';
+  tag?: string;
+  link?: string;
+}
+
 export default function DashboardPage() {
   const { jovenes, isLoading } = useJovenes();
   const { session } = useAuth();
@@ -452,8 +469,14 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, color, trend, label }: any) {
-  const colorSchemes: any = {
+function StatCard({ title, value, icon: Icon, color, trend, label }: StatCardProps) {
+  const colorSchemes: Record<StatCardProps['color'], {
+    bg: string;
+    iconBg: string;
+    text: string;
+    border: string;
+    shadow: string;
+  }> = {
     blue: {
       bg: 'bg-blue-50',
       iconBg: 'bg-blue-600',
@@ -513,8 +536,8 @@ function StatCard({ title, value, icon: Icon, color, trend, label }: any) {
   );
 }
 
-function EventItem({ title, date, type, tag, link }: any) {
-  const iconMap: any = {
+function EventItem({ title, date, type, tag, link }: EventItemProps) {
+  const iconMap: Record<EventItemProps['type'], string> = {
     meeting: '👥',
     vigil: '🔥',
     birthday: '🎂'

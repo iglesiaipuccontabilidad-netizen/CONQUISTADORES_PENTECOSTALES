@@ -39,8 +39,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Grupo } from '@/types';
 
+// Extended Grupo type for the UI
+interface GrupoUI extends Omit<Grupo, 'lider'> {
+  lider_nombre?: string;
+  integrantes_count?: number;
+  color?: string;
+}
+
 // Mock data
-const mockGrupos = [
+const mockGrupos: GrupoUI[] = [
   {
     id: '1',
     nombre: 'Grupo Alfa',
@@ -48,7 +55,9 @@ const mockGrupos = [
     lider_id: 'user1',
     lider_nombre: 'Juan Pérez',
     integrantes_count: 15,
+    estado: 'activo',
     created_at: '2024-01-15',
+    updated_at: '2024-01-15',
     color: 'blue'
   },
   {
@@ -58,7 +67,9 @@ const mockGrupos = [
     lider_id: 'user2',
     lider_nombre: 'María García',
     integrantes_count: 8,
+    estado: 'activo',
     created_at: '2024-02-01',
+    updated_at: '2024-02-01',
     color: 'emerald'
   },
 ];
@@ -66,7 +77,7 @@ const mockGrupos = [
 export default function GruposPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
+  const [selectedGrupo, setSelectedGrupo] = useState<GrupoUI | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Mock loading state
@@ -78,7 +89,7 @@ export default function GruposPage() {
     grupo.lider_nombre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDeleteClick = (grupo: any) => {
+  const handleDeleteClick = (grupo: GrupoUI) => {
     setSelectedGrupo(grupo);
     setDeleteDialogOpen(true);
   };

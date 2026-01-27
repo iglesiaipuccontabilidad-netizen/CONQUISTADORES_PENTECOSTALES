@@ -32,7 +32,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Joven } from '@/types';
+import { Joven } from '@/types/index';
 
 export default function JovenDetailPage() {
   const params = useParams();
@@ -40,7 +40,7 @@ export default function JovenDetailPage() {
   const joven_id = params.id as string;
   const { useGetJoven, updateJoven } = useJovenes();
   const { data: joven, isLoading, error } = useGetJoven(joven_id);
-  const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] = useState<Joven | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -53,17 +53,23 @@ export default function JovenDetailPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: Partial<Joven> | null) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
   };
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
-    setFormData((prev: Partial<Joven> | null) => ({
-      ...prev,
-      [field]: checked,
-    }));
+    setFormData((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [field]: checked,
+      };
+    });
   };
 
   const handleSave = async () => {
@@ -172,7 +178,7 @@ export default function JovenDetailPage() {
                 variant="outline"
                 onClick={() => {
                   setIsEditing(false);
-                  setFormData(joven);
+                  setFormData(joven || null);
                 }}
                 className="h-11 rounded-xl border-slate-200 font-bold px-6"
               >

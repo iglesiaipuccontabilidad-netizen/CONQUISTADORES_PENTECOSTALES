@@ -26,6 +26,7 @@ import { validatorsColombia } from '@/utils/validators'
 type RegistroJovenFormType = z.infer<typeof registroJovenSchema>
 import apiClient from '@/utils/api-client'
 import { toast } from 'sonner'
+import { AxiosError } from 'axios'
 import {
   ArrowLeft,
   CheckCircle2,
@@ -152,13 +153,14 @@ export default function RegistroPage() {
         setIsSubmitting(false) // Allow retry on error
         hasSubmittedRef.current = false // Allow retry on error
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.log('API call failed:', error)
+      const axiosError = error as AxiosError
       console.log('Error details:', {
-        message: (error as any)?.message,
-        response: (error as any)?.response?.data,
-        status: (error as any)?.response?.status,
-        statusText: (error as any)?.response?.statusText
+        message: axiosError?.message,
+        response: axiosError?.response?.data,
+        status: axiosError?.response?.status,
+        statusText: axiosError?.response?.statusText
       })
       toast.error('Ocurrió un error inesperado. Inténtalo de nuevo.')
       setIsSubmitting(false) // Allow retry on error
@@ -300,7 +302,7 @@ export default function RegistroPage() {
                   </div>
 
                   <p className="text-sm md:text-lg text-slate-700 leading-relaxed max-w-md italic font-semibold px-2">
-                    'Ninguno tenga en poco tu juventud, sino sé ejemplo de los creyentes en palabra, conducta, amor, espíritu, fe y pureza.'
+                    &apos;Ninguno tenga en poco tu juventud, sino sé ejemplo de los creyentes en palabra, conducta, amor, espíritu, fe y pureza.&apos;
                     <span className="block mt-2 font-black not-italic text-xs md:text-sm text-[#00338D]">1 Timoteo 4:12</span>
                   </p>
                 </div>
@@ -532,7 +534,7 @@ export default function RegistroPage() {
                             <FormField
                               key={item.id}
                               control={form.control}
-                              name={`consentimientos.${item.id}` as any}
+                              name={`consentimientos.${item.id}` as `consentimientos.${keyof RegistroJovenFormType['consentimientos']}`}
                               render={({ field }) => (
                                 <FormItem
                                   onClick={() => field.onChange(!field.value)}

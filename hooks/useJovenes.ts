@@ -11,8 +11,8 @@ export const useJovenes = () => {
   const { data: jovenes, isLoading, error } = useQuery<Joven[]>({
     queryKey: ['jovenes'],
     queryFn: async () => {
-      const { data } = await apiClient.get<unknown>('/jovenes')
-      return (data as any).jovenes || (data as any).data || []
+      const response = await apiClient.get<ApiResponse<Joven[]>>('/jovenes')
+      return response.data?.data || []
     },
   })
 
@@ -22,21 +22,18 @@ export const useJovenes = () => {
       queryFn: async () => {
         try {
           console.log('🔍 Fetching details for joven_id:', id)
-          const { data } = await apiClient.get<unknown>(`/jovenes/${id}`)
-          console.log('📡 API Response Body:', data)
+          const response = await apiClient.get<ApiResponse<Joven>>(`/jovenes/${id}`)
+          console.log('📡 API Response Body:', response.data)
 
-          // El backend devuelve { status: 'success', joven: { ... } }
-          const result = (data as any)?.joven || (data as any)?.data || ((data as any) && !(data as any).status ? (data as any) : null)
-
-          console.log('✅ Extracted Joven:', result)
-
-          if (!result) {
-            console.warn('⚠️ No youth data found in the response object')
+          // El backend devuelve { success: true, data: { ... } }
+          if (response.data?.success && response.data?.data) {
+            console.log('✅ Found joven:', response.data.data)
+            return response.data.data
           }
 
-          return result as Joven | null
+          return null
         } catch (error: unknown) {
-          console.error('❌ Error fetching joven details:', (error as any).response?.data || (error as any).message || error)
+          console.error('❌ Error fetching joven details:', error)
           return null
         }
       },

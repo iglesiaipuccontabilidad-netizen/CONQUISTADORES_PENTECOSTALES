@@ -62,8 +62,8 @@ export default function NewJovenPage() {
 
       toast.success('Joven creado correctamente');
       router.push('/dashboard/jovenes');
-    } catch (error: any) {
-      toast.error(error.message || 'Error al crear joven');
+    } catch (error: unknown) {
+      toast.error((error as Error).message || 'Error al crear joven');
     } finally {
       setIsSubmitting(false);
     }

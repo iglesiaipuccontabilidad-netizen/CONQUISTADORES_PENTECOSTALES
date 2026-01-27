@@ -601,8 +601,8 @@ export default function ReportesPage() {
   );
 }
 
-function StatMiniCard({ label, value, color, icon: Icon }: { label: string, value: number, color: string, icon: any }) {
-  const families: any = {
+function StatMiniCard({ label, value, color, icon: Icon }: { label: string, value: number, color: string, icon: React.ComponentType<{ size?: number; className?: string }> }) {
+  const families: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
     emerald: "bg-emerald-50 text-emerald-600",
     violet: "bg-purple-50 text-purple-600",

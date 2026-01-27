@@ -18,6 +18,7 @@ export interface User {
 export interface Joven {
   id: string
   nombre_completo: string
+  cedula: string
   fecha_nacimiento: string
   edad?: number
   celular: string
@@ -39,6 +40,9 @@ export interface Joven {
     terminos?: boolean
   }
   consentimiento_datos_personales?: boolean
+  consentimiento_whatsapp?: boolean
+  consentimiento_procesamiento?: boolean
+  consentimiento_terminos?: boolean
   created_at: string
   updated_at: string
   created_by?: string

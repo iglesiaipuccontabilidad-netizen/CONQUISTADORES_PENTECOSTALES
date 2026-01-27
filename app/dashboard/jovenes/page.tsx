@@ -72,12 +72,28 @@ import {
 import { toast } from 'sonner';
 import { motion, AnimatePresence, LayoutGroup, easeOut } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Joven } from '@/types/index';
+
+interface StatCardProps {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  value: number | string;
+  color: 'blue' | 'emerald' | 'violet' | 'amber';
+  subLabel?: string;
+  isLoading?: boolean;
+}
+
+interface BadgeProps {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  variant: 'emerald' | 'violet' | 'amber' | 'rose' | 'blue';
+  label: string;
+}
 
 export default function JovenesPage() {
   const { jovenes, isLoading, deleteJoven } = useJovenes();
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedJoven, setSelectedJoven] = useState<any>(null);
+  const [selectedJoven, setSelectedJoven] = useState<Joven | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Filtros
@@ -144,13 +160,16 @@ export default function JovenesPage() {
     }
 
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
       switch (sortField) {
         case 'nombre_completo': aValue = a.nombre_completo || ''; bValue = b.nombre_completo || ''; break;
         case 'edad': aValue = calculateAge(a.fecha_nacimiento); bValue = calculateAge(b.fecha_nacimiento); break;
         default: aValue = a.nombre_completo || ''; bValue = b.nombre_completo || '';
       }
-      if (typeof aValue === 'string') { aValue = aValue.toLowerCase(); bValue = bValue.toLowerCase(); }
+      if (typeof aValue === 'string') { 
+        aValue = aValue.toLowerCase(); 
+        bValue = (bValue as string).toLowerCase(); 
+      }
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -187,7 +206,7 @@ export default function JovenesPage() {
     }
   };
 
-  const handleDeleteClick = (joven: any) => {
+  const handleDeleteClick = (joven: Joven) => {
     setSelectedJoven(joven);
     setDeleteDialogOpen(true);
   };
@@ -200,8 +219,9 @@ export default function JovenesPage() {
       toast.success('Joven eliminado correctamente');
       setDeleteDialogOpen(false);
       setSelectedJoven(null);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Error al eliminar');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al eliminar';
+      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
     }
@@ -642,8 +662,8 @@ export default function JovenesPage() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, color, subLabel, isLoading }: any) {
-  const colors: any = {
+function StatCard({ icon: Icon, label, value, color, subLabel, isLoading }: StatCardProps) {
+  const colors: Record<StatCardProps['color'], string> = {
     blue: "from-blue-500 to-indigo-600 shadow-blue-200 text-blue-600 bg-blue-50/50",
     emerald: "from-emerald-500 to-teal-600 shadow-emerald-200 text-emerald-600 bg-emerald-50/50",
     violet: "from-violet-500 to-purple-600 shadow-violet-200 text-violet-600 bg-violet-50/50",
@@ -673,8 +693,8 @@ function StatCard({ icon: Icon, label, value, color, subLabel, isLoading }: any)
   );
 }
 
-function Badge({ icon: Icon, variant, label }: { icon: any, variant: string, label: string }) {
-  const families: any = {
+function Badge({ icon: Icon, variant, label }: BadgeProps) {
+  const families: Record<BadgeProps['variant'], string> = {
     emerald: "bg-emerald-50 text-emerald-700 border-emerald-100/50 shadow-emerald-100/20",
     violet: "bg-purple-50 text-purple-700 border-purple-100/50 shadow-purple-100/20",
     amber: "bg-amber-50 text-amber-700 border-amber-100/50 shadow-amber-100/20",
