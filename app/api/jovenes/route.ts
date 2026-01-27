@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createCorsResponse, createCorsErrorResponse, createCorsOptionsResponse } from '@/utils/cors'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -10,6 +11,19 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false,
   },
 })
+
+// OPTIONS /api/jovenes - CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    }
+  })
+}
 
 // GET /api/jovenes - Listar todos los jóvenes
 export async function GET(request: NextRequest) {
@@ -80,6 +94,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: jovenes || [],
       count: jovenes?.length || 0,
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
     })
   } catch (error) {
     console.error('Error en GET /api/jovenes:', error)
@@ -145,6 +165,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: joven,
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      }
     })
   } catch (error) {
     console.error('Error en POST /api/jovenes:', error)
