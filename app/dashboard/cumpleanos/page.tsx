@@ -69,12 +69,6 @@ export default function CumpleanosPage() {
           </div>
           <p className="text-slate-500 font-medium text-sm md:text-base">Gestionar felicitaciones y celebrar la vida de nuestros jóvenes</p>
         </div>
-        <div className="flex w-full md:w-auto gap-2">
-          <Button variant="outline" className="flex-1 md:flex-none h-10 md:h-11 rounded-xl border-slate-200 bg-white/50 backdrop-blur-sm font-bold px-4 md:px-6 hover:bg-white text-sm">
-            <Gift size={18} className="mr-2 text-[#F5A623]" />
-            Plantillas
-          </Button>
-        </div>
       </div>
 
       {/* Modern Tabs - Glassmorphism & Responsiveness */}
@@ -168,27 +162,6 @@ export default function CumpleanosPage() {
 
           {activeTab === 'mes' && (
             <div className="space-y-8">
-              {/* StatCards for Month */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                <MiniStatCard
-                  label="Total del Mes"
-                  value={estadisticasMes.totalEnMes}
-                  icon={Calendar}
-                  color="blue"
-                />
-                <MiniStatCard
-                  label="Enviadas"
-                  value={estadisticasMes.enviados}
-                  icon={Send}
-                  color="emerald"
-                />
-                <MiniStatCard
-                  label="Pendientes"
-                  value={estadisticasMes.pendientes}
-                  icon={Clock}
-                  color="amber"
-                />
-              </div>
 
               <Card className="p-4 md:p-8 border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2.5rem] bg-white">
                 <div className="flex items-center gap-3 mb-6 md:mb-8">
@@ -369,32 +342,6 @@ function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps)
   );
 }
 
-interface MiniStatCardProps {
-  label: string;
-  value: number;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  color: string;
-}
-
-function MiniStatCard({ label, value, icon: Icon, color }: MiniStatCardProps) {
-  const colorClasses: Record<string, string> = {
-    blue: "text-[#00338D] bg-blue-50 border-blue-100",
-    emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
-    amber: "text-amber-600 bg-amber-50 border-amber-100",
-  };
-
-  return (
-    <Card className={cn("p-4 md:p-6 flex items-center gap-4 md:gap-5 border-slate-100 shadow-xl rounded-[1.2rem] md:rounded-[2rem] bg-white transition-all hover:scale-[1.02]", colorClasses[color])}>
-      <div className={cn("h-10 w-10 md:h-14 md:w-14 rounded-lg md:rounded-2xl flex items-center justify-center border flex-shrink-0", colorClasses[color])}>
-        <Icon className="w-5 h-5 md:w-7 md:h-7" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5 md:mb-1 truncate">{label}</p>
-        <h4 className="text-xl md:text-2xl font-black text-[#1A1A1A] tracking-tight">{value}</h4>
-      </div>
-    </Card>
-  );
-}
 
 const StarIcon = ({ size = 24, className, ...props }: { size?: number; className?: string } & React.SVGProps<SVGSVGElement>) => (
   <svg

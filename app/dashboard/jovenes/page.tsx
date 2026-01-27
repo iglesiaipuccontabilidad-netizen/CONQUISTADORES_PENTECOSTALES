@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useJovenes } from '@/hooks/useJovenes';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 // Función utilitaria para calcular edad precisa
 const calculateAge = (birthDate: string): number => {

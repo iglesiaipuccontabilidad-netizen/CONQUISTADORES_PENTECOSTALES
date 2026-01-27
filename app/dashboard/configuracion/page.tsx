@@ -119,118 +119,137 @@ export default function ConfiguracionPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Configuración</h1>
-          <p className="text-slate-500 mt-1">Administra la configuración del sistema</p>
+    <div className="space-y-6 pb-12">
+      {/* Header - Premium Style */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-1">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-1.5 bg-[#00338D] rounded-full" />
+            <h1 className="text-2xl md:text-3xl font-black text-[#1A1A1A] tracking-tight">Configuración</h1>
+          </div>
+          <p className="text-slate-500 font-medium text-sm md:text-base">Administra los parámetros y preferencias del sistema</p>
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
-          <Save size={16} className="mr-2" />
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-full md:w-auto h-10 md:h-11 rounded-xl bg-[#00338D] hover:bg-[#00338D]/90 text-white font-bold px-6 shadow-lg shadow-blue-900/10 transition-all"
+        >
+          <Save size={18} className="mr-2" />
           {isSaving ? 'Guardando...' : 'Guardar Cambios'}
         </Button>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <SettingsIcon size={16} />
-            General
-          </TabsTrigger>
-          <TabsTrigger value="notificaciones" className="flex items-center gap-2">
-            <Bell size={16} />
-            Notificaciones
-          </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-            <MessageSquare size={16} />
-            WhatsApp
-          </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center gap-2">
-            <Mail size={16} />
-            Email
-          </TabsTrigger>
-          <TabsTrigger value="backup" className="flex items-center gap-2">
-            <Database size={16} />
-            Backup
-          </TabsTrigger>
-          <TabsTrigger value="seguridad" className="flex items-center gap-2">
-            <Shield size={16} />
-            Seguridad
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="general" className="space-y-6">
+        <div className="relative">
+          <TabsList className="flex w-full bg-slate-100/80 backdrop-blur-md rounded-2xl p-1.5 h-auto overflow-x-auto no-scrollbar scroll-smooth justify-start md:justify-center lg:grid lg:grid-cols-6 gap-1 md:gap-2">
+            <TabsTrigger value="general" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider flex-shrink-0 data-[state=active]:bg-white data-[state=active]:text-[#00338D] data-[state=active]:shadow-sm transition-all">
+              <SettingsIcon size={16} />
+              General
+            </TabsTrigger>
+            <TabsTrigger value="notificaciones" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider flex-shrink-0 data-[state=active]:bg-white data-[state=active]:text-[#00338D] data-[state=active]:shadow-sm transition-all">
+              <Bell size={16} />
+              Notificaciones
+            </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider flex-shrink-0 data-[state=active]:bg-white data-[state=active]:text-[#00338D] data-[state=active]:shadow-sm transition-all">
+              <MessageSquare size={16} />
+              WhatsApp
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider flex-shrink-0 data-[state=active]:bg-white data-[state=active]:text-[#00338D] data-[state=active]:shadow-sm transition-all">
+              <Mail size={16} />
+              Email
+            </TabsTrigger>
+            <TabsTrigger value="backup" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider flex-shrink-0 data-[state=active]:bg-white data-[state=active]:text-[#00338D] data-[state=active]:shadow-sm transition-all">
+              <Database size={16} />
+              Backup
+            </TabsTrigger>
+            <TabsTrigger value="seguridad" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider flex-shrink-0 data-[state=active]:bg-white data-[state=active]:text-[#00338D] data-[state=active]:shadow-sm transition-all">
+              <Shield size={16} />
+              Seguridad
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* General */}
         <TabsContent value="general">
-          <Card className="p-6 space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <SettingsIcon size={20} />
-              <h2 className="text-lg font-semibold">Configuración General</h2>
+          <Card className="p-6 md:p-8 space-y-8 border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2.5rem] bg-white">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-blue-50 text-[#00338D] flex items-center justify-center">
+                <SettingsIcon size={24} />
+              </div>
+              <h2 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight">Configuración General</h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Nombre del Comité</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Nombre del Comité</label>
                 <Input
                   value={config.nombreComite}
-                  onChange={(e) => setConfig({...config, nombreComite: e.target.value})}
+                  onChange={(e) => setConfig({ ...config, nombreComite: e.target.value })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email de Contacto</label>
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Email de Contacto</label>
                 <Input
                   type="email"
                   value={config.emailContacto}
-                  onChange={(e) => setConfig({...config, emailContacto: e.target.value})}
+                  onChange={(e) => setConfig({ ...config, emailContacto: e.target.value })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all font-medium"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Descripción</label>
+            <div className="space-y-2">
+              <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Descripción</label>
               <Textarea
                 value={config.descripcion}
-                onChange={(e) => setConfig({...config, descripcion: e.target.value})}
+                onChange={(e) => setConfig({ ...config, descripcion: e.target.value })}
                 rows={3}
+                className="rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all font-medium min-h-[100px]"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Teléfono</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Teléfono</label>
                 <Input
                   value={config.telefono}
-                  onChange={(e) => setConfig({...config, telefono: e.target.value})}
+                  onChange={(e) => setConfig({ ...config, telefono: e.target.value })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Edad Mínima</label>
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Edad Mínima</label>
                 <Input
                   type="number"
                   value={config.edadMinima}
-                  onChange={(e) => setConfig({...config, edadMinima: parseInt(e.target.value)})}
+                  onChange={(e) => setConfig({ ...config, edadMinima: parseInt(e.target.value) })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all font-medium"
                 />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md group">
                 <div>
-                  <label className="text-sm font-medium">Registro Público Habilitado</label>
-                  <p className="text-xs text-slate-500">Permitir que jóvenes se registren solos</p>
+                  <label className="text-sm font-black text-slate-900">Registro Público Habilitado</label>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Permitir que jóvenes se registren solos</p>
                 </div>
                 <Switch
                   checked={config.registroHabilitado}
-                  onCheckedChange={(checked) => setConfig({...config, registroHabilitado: checked})}
+                  onCheckedChange={(checked) => setConfig({ ...config, registroHabilitado: checked })}
+                  className="data-[state=checked]:bg-[#00338D]"
                 />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md group">
                 <div>
-                  <label className="text-sm font-medium">Requiere Aprobación</label>
-                  <p className="text-xs text-slate-500">Los nuevos registros necesitan aprobación</p>
+                  <label className="text-sm font-black text-slate-900">Requiere Aprobación</label>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Los nuevos registros necesitan aprobación</p>
                 </div>
                 <Switch
                   checked={config.requiereAprobacion}
-                  onCheckedChange={(checked) => setConfig({...config, requiereAprobacion: checked})}
+                  onCheckedChange={(checked) => setConfig({ ...config, requiereAprobacion: checked })}
+                  className="data-[state=checked]:bg-[#00338D]"
                 />
               </div>
             </div>
@@ -239,72 +258,79 @@ export default function ConfiguracionPage() {
 
         {/* Notificaciones */}
         <TabsContent value="notificaciones">
-          <Card className="p-6 space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Bell size={20} />
-              <h2 className="text-lg font-semibold">Notificaciones</h2>
+          <Card className="p-6 md:p-8 space-y-8 border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2.5rem] bg-white">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <Bell size={24} />
+              </div>
+              <h2 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight">Notificaciones</h2>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-indigo-50/30 border border-indigo-100 transition-all hover:bg-white hover:shadow-md">
               <div>
-                <label className="text-sm font-medium">Notificaciones Activas</label>
-                <p className="text-xs text-slate-500">Habilitar sistema de notificaciones</p>
+                <label className="text-sm font-black text-indigo-900">Notificaciones Activas</label>
+                <p className="text-xs text-indigo-600/70 font-medium mt-0.5">Habilitar sistema de notificaciones global</p>
               </div>
               <Switch
                 checked={config.notificacionesActivas}
-                onCheckedChange={(checked) => setConfig({...config, notificacionesActivas: checked})}
+                onCheckedChange={(checked) => setConfig({ ...config, notificacionesActivas: checked })}
+                className="data-[state=checked]:bg-indigo-600"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Emails de Administradores</label>
+            <div className="space-y-2">
+              <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Emails de Administradores</label>
               <Textarea
                 value={config.emailsAdmins.join('\n')}
-                onChange={(e) => setConfig({...config, emailsAdmins: e.target.value.split('\n')})}
-                placeholder="admin1@email.com
-admin2@email.com"
+                onChange={(e) => setConfig({ ...config, emailsAdmins: e.target.value.split('\n') })}
+                placeholder="admin1@email.com\nadmin2@email.com"
                 rows={3}
+                className="rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all font-medium"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Hora de Inicio</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Hora de Inicio</label>
                 <Input
                   type="time"
                   value={config.horaInicio}
-                  onChange={(e) => setConfig({...config, horaInicio: e.target.value})}
+                  onChange={(e) => setConfig({ ...config, horaInicio: e.target.value })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Hora de Fin</label>
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Hora de Fin</label>
                 <Input
                   type="time"
                   value={config.horaFin}
-                  onChange={(e) => setConfig({...config, horaFin: e.target.value})}
+                  onChange={(e) => setConfig({ ...config, horaFin: e.target.value })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium"
                 />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md">
                 <div>
-                  <label className="text-sm font-medium">Nuevo Registro</label>
-                  <p className="text-xs text-slate-500">Notificar cuando hay un nuevo registro</p>
+                  <label className="text-sm font-black text-slate-900">Nuevo Registro</label>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Notificar cuando hay un nuevo registro</p>
                 </div>
                 <Switch
                   checked={config.notificarNuevoRegistro}
-                  onCheckedChange={(checked) => setConfig({...config, notificarNuevoRegistro: checked})}
+                  onCheckedChange={(checked) => setConfig({ ...config, notificarNuevoRegistro: checked })}
+                  className="data-[state=checked]:bg-[#00338D]"
                 />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md">
                 <div>
-                  <label className="text-sm font-medium">Cumpleaños del Día</label>
-                  <p className="text-xs text-slate-500">Recordatorio diario de cumpleaños</p>
+                  <label className="text-sm font-black text-slate-900">Cumpleaños del Día</label>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Recordatorio diario de cumpleaños</p>
                 </div>
                 <Switch
                   checked={config.notificarCumpleanos}
-                  onCheckedChange={(checked) => setConfig({...config, notificarCumpleanos: checked})}
+                  onCheckedChange={(checked) => setConfig({ ...config, notificarCumpleanos: checked })}
+                  className="data-[state=checked]:bg-[#00338D]"
                 />
               </div>
             </div>
@@ -313,35 +339,42 @@ admin2@email.com"
 
         {/* WhatsApp */}
         <TabsContent value="whatsapp">
-          <Card className="p-6 space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <MessageSquare size={20} />
-              <h2 className="text-lg font-semibold">WhatsApp</h2>
+          <Card className="p-6 md:p-8 space-y-8 border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2.5rem] bg-white">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <MessageSquare size={24} />
+              </div>
+              <h2 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight">WhatsApp</h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Código de País</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Código de País</label>
                 <Input
                   value={config.codigoPais}
-                  onChange={(e) => setConfig({...config, codigoPais: e.target.value})}
+                  onChange={(e) => setConfig({ ...config, codigoPais: e.target.value })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Formato de Número</label>
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Formato de Número</label>
                 <Input
                   value={config.formatoNumero}
-                  onChange={(e) => setConfig({...config, formatoNumero: e.target.value})}
+                  onChange={(e) => setConfig({ ...config, formatoNumero: e.target.value })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Test de Número</label>
-              <div className="flex gap-2">
-                <Input placeholder="Ej: 3001234567" />
-                <Button variant="outline">
-                  <TestTube size={16} className="mr-2" />
+            <div className="space-y-4 pt-4 border-t border-slate-100">
+              <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Validar Número de Prueba</label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="Ej: 3001234567"
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium flex-1"
+                />
+                <Button variant="outline" className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 font-bold px-6 hover:bg-slate-50">
+                  <TestTube size={18} className="mr-2 text-emerald-600" />
                   Validar
                 </Button>
               </div>
@@ -351,103 +384,116 @@ admin2@email.com"
 
         {/* Email */}
         <TabsContent value="email">
-          <Card className="p-6 space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Mail size={20} />
-              <h2 className="text-lg font-semibold">Plantillas de Email</h2>
+          <Card className="p-6 md:p-8 space-y-8 border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2.5rem] bg-white">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                <Mail size={24} />
+              </div>
+              <h2 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight">Plantillas de Email</h2>
             </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium">Bienvenida</label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleTestEmail('bienvenida')}
-                >
-                  <TestTube size={14} className="mr-1" />
-                  Test
-                </Button>
+            <div className="space-y-6">
+              <div className="p-5 rounded-[1.5rem] bg-slate-50/50 border border-slate-100 space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs md:text-sm font-black uppercase tracking-widest text-[#00338D]">Bienvenida</label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-lg text-xs font-bold text-orange-600 hover:bg-orange-50"
+                    onClick={() => handleTestEmail('bienvenida')}
+                  >
+                    <TestTube size={14} className="mr-1.5" />
+                    Test
+                  </Button>
+                </div>
+                <Textarea
+                  value={config.plantillaBienvenida}
+                  onChange={(e) => setConfig({ ...config, plantillaBienvenida: e.target.value })}
+                  rows={4}
+                  placeholder="Variables: {NOMBRE}, {EMAIL}"
+                  className="rounded-xl border-slate-200 bg-white focus:bg-white transition-all font-medium"
+                />
               </div>
-              <Textarea
-                value={config.plantillaBienvenida}
-                onChange={(e) => setConfig({...config, plantillaBienvenida: e.target.value})}
-                rows={4}
-                placeholder="Variables: {NOMBRE}, {EMAIL}"
-              />
-            </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium">Recuperación de Contraseña</label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleTestEmail('recuperacion')}
-                >
-                  <TestTube size={14} className="mr-1" />
-                  Test
-                </Button>
+              <div className="p-5 rounded-[1.5rem] bg-slate-50/50 border border-slate-100 space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs md:text-sm font-black uppercase tracking-widest text-[#00338D]">Recuperación de Contraseña</label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-lg text-xs font-bold text-orange-600 hover:bg-orange-50"
+                    onClick={() => handleTestEmail('recuperacion')}
+                  >
+                    <TestTube size={14} className="mr-1.5" />
+                    Test
+                  </Button>
+                </div>
+                <Textarea
+                  value={config.plantillaRecuperacion}
+                  onChange={(e) => setConfig({ ...config, plantillaRecuperacion: e.target.value })}
+                  rows={3}
+                  placeholder="Variables: {LINK}"
+                  className="rounded-xl border-slate-200 bg-white focus:bg-white transition-all font-medium"
+                />
               </div>
-              <Textarea
-                value={config.plantillaRecuperacion}
-                onChange={(e) => setConfig({...config, plantillaRecuperacion: e.target.value})}
-                rows={3}
-                placeholder="Variables: {LINK}"
-              />
-            </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium">Notificación Nuevo Registro</label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleTestEmail('nuevo-registro')}
-                >
-                  <TestTube size={14} className="mr-1" />
-                  Test
-                </Button>
+              <div className="p-5 rounded-[1.5rem] bg-slate-50/50 border border-slate-100 space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs md:text-sm font-black uppercase tracking-widest text-[#00338D]">Notificación Nuevo Registro</label>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-lg text-xs font-bold text-orange-600 hover:bg-orange-50"
+                    onClick={() => handleTestEmail('nuevo-registro')}
+                  >
+                    <TestTube size={14} className="mr-1.5" />
+                    Test
+                  </Button>
+                </div>
+                <Textarea
+                  value={config.plantillaNuevoRegistro}
+                  onChange={(e) => setConfig({ ...config, plantillaNuevoRegistro: e.target.value })}
+                  rows={3}
+                  placeholder="Variables: {NOMBRE}, {EMAIL}"
+                  className="rounded-xl border-slate-200 bg-white focus:bg-white transition-all font-medium"
+                />
               </div>
-              <Textarea
-                value={config.plantillaNuevoRegistro}
-                onChange={(e) => setConfig({...config, plantillaNuevoRegistro: e.target.value})}
-                rows={3}
-                placeholder="Variables: {NOMBRE}, {EMAIL}"
-              />
             </div>
           </Card>
         </TabsContent>
 
         {/* Backup */}
         <TabsContent value="backup">
-          <Card className="p-6 space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Database size={20} />
-              <h2 className="text-lg font-semibold">Backup y Restauración</h2>
+          <Card className="p-6 md:p-8 space-y-8 border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2.5rem] bg-white">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-blue-50 text-[#0066B3] flex items-center justify-center">
+                <Database size={24} />
+              </div>
+              <h2 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight">Backup y Restauración</h2>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50/50 border border-blue-100 transition-all hover:bg-white hover:shadow-md">
               <div>
-                <label className="text-sm font-medium">Backup Automático</label>
-                <p className="text-xs text-slate-500">Realizar backups automáticamente</p>
+                <label className="text-sm font-black text-[#1A1A1A]">Backup Automático</label>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Realizar backups periódicos automáticamente</p>
               </div>
               <Switch
                 checked={config.backupAutomatico}
-                onCheckedChange={(checked) => setConfig({...config, backupAutomatico: checked})}
+                onCheckedChange={(checked) => setConfig({ ...config, backupAutomatico: checked })}
+                className="data-[state=checked]:bg-[#00338D]"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Frecuencia de Backup</label>
+            <div className="space-y-4">
+              <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Frecuencia de Respaldo</label>
               <Select
                 value={config.frecuenciaBackup}
-                onValueChange={(value) => setConfig({...config, frecuenciaBackup: value})}
+                onValueChange={(value) => setConfig({ ...config, frecuenciaBackup: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white transition-all font-medium text-slate-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl border-slate-200 shadow-xl">
                   <SelectItem value="diario">Diario</SelectItem>
                   <SelectItem value="semanal">Semanal</SelectItem>
                   <SelectItem value="mensual">Mensual</SelectItem>
@@ -455,9 +501,12 @@ admin2@email.com"
               </Select>
             </div>
 
-            <div className="pt-4 border-t">
-              <Button variant="outline" className="w-full">
-                <Database size={16} className="mr-2" />
+            <div className="pt-6 border-t border-slate-100">
+              <Button
+                variant="outline"
+                className="w-full h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 font-bold text-[#1A1A1A] hover:bg-slate-50 hover:text-[#00338D] transition-all"
+              >
+                <Database size={18} className="mr-2" />
                 Descargar Backup Manual
               </Button>
             </div>
@@ -466,88 +515,98 @@ admin2@email.com"
 
         {/* Seguridad */}
         <TabsContent value="seguridad">
-          <Card className="p-6 space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield size={20} />
-              <h2 className="text-lg font-semibold">Seguridad</h2>
+          <Card className="p-6 md:p-8 space-y-8 border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[1.5rem] md:rounded-[2.5rem] bg-white">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                <Shield size={24} />
+              </div>
+              <h2 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight">Seguridad</h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Tiempo de Sesión (minutos)</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Tiempo de Sesión (min)</label>
                 <Input
                   type="number"
                   value={config.tiempoSesion}
-                  onChange={(e) => setConfig({...config, tiempoSesion: parseInt(e.target.value)})}
+                  onChange={(e) => setConfig({ ...config, tiempoSesion: parseInt(e.target.value) })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Intentos de Login Permitidos</label>
+              <div className="space-y-2">
+                <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Intentos Fallidos Permitidos</label>
                 <Input
                   type="number"
                   value={config.intentosLogin}
-                  onChange={(e) => setConfig({...config, intentosLogin: parseInt(e.target.value)})}
+                  onChange={(e) => setConfig({ ...config, intentosLogin: parseInt(e.target.value) })}
+                  className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Tiempo de Bloqueo (minutos)</label>
+            <div className="space-y-2">
+              <label className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-400">Tiempo de Bloqueo (minutos)</label>
               <Input
                 type="number"
                 value={config.tiempoBloqueo}
-                onChange={(e) => setConfig({...config, tiempoBloqueo: parseInt(e.target.value)})}
+                onChange={(e) => setConfig({ ...config, tiempoBloqueo: parseInt(e.target.value) })}
+                className="h-11 md:h-12 rounded-xl md:rounded-2xl border-slate-200 bg-slate-50/50 transition-all font-medium"
               />
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md">
                 <div>
-                  <label className="text-sm font-medium">Contraseña Fuerte Requerida</label>
-                  <p className="text-xs text-slate-500">Aplicar reglas estrictas de contraseña</p>
+                  <label className="text-sm font-black text-slate-900">Políticas de Password Estrictas</label>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Exigir seguridad máxima en cuentas</p>
                 </div>
                 <Switch
                   checked={config.contrasenaFuerte}
-                  onCheckedChange={(checked) => setConfig({...config, contrasenaFuerte: checked})}
+                  onCheckedChange={(checked) => setConfig({ ...config, contrasenaFuerte: checked })}
+                  className="data-[state=checked]:bg-[#1A1A1A]"
                 />
               </div>
 
               {config.contrasenaFuerte && (
-                <div className="ml-4 space-y-2">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-slate-600 mb-1">Mínimo Caracteres</label>
+                <div className="ml-0 md:ml-6 p-6 rounded-[2rem] bg-slate-50/80 border border-slate-200/60 space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mínimo Caracteres</label>
                       <Input
                         type="number"
                         value={config.minCaracteres}
-                        onChange={(e) => setConfig({...config, minCaracteres: parseInt(e.target.value)})}
+                        onChange={(e) => setConfig({ ...config, minCaracteres: parseInt(e.target.value) })}
+                        className="h-10 rounded-xl border-slate-200 bg-white"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100">
                       <input
                         type="checkbox"
                         checked={config.requiereMayusculas}
-                        onChange={(e) => setConfig({...config, requiereMayusculas: e.target.checked})}
+                        onChange={(e) => setConfig({ ...config, requiereMayusculas: e.target.checked })}
+                        className="h-4 w-4 rounded border-slate-300 text-[#00338D] focus:ring-[#00338D]"
                       />
-                      <label className="text-xs">Requiere mayúsculas</label>
+                      <label className="text-xs font-bold text-slate-700">Mayúsculas</label>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100">
                       <input
                         type="checkbox"
                         checked={config.requiereNumeros}
-                        onChange={(e) => setConfig({...config, requiereNumeros: e.target.checked})}
+                        onChange={(e) => setConfig({ ...config, requiereNumeros: e.target.checked })}
+                        className="h-4 w-4 rounded border-slate-300 text-[#00338D] focus:ring-[#00338D]"
                       />
-                      <label className="text-xs">Requiere números</label>
+                      <label className="text-xs font-bold text-slate-700">Números</label>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100">
                       <input
                         type="checkbox"
                         checked={config.requiereEspeciales}
-                        onChange={(e) => setConfig({...config, requiereEspeciales: e.target.checked})}
+                        onChange={(e) => setConfig({ ...config, requiereEspeciales: e.target.checked })}
+                        className="h-4 w-4 rounded border-slate-300 text-[#00338D] focus:ring-[#00338D]"
                       />
-                      <label className="text-xs">Requiere caracteres especiales</label>
+                      <label className="text-xs font-bold text-slate-700">Caract. Especiales</label>
                     </div>
                   </div>
                 </div>
