@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/dashboard/layout,_N_T_/dashboard/jovenes/layout,_N_T_/dashboard/jovenes/page,_N_T_/dashboard/jovenes"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/dashboard/jovenes/__PAGE__",
+    "/dashboard/jovenes",
+    "/dashboard",
+    "/_index",
+    "/_head"
+  ]
+}

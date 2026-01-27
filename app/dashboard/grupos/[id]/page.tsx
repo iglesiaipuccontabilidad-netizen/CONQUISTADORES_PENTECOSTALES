@@ -16,13 +16,11 @@ import {
   Save,
   X,
   Users,
-  User,
-  Calendar,
-  MoreVertical,
   Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Grupo } from '@/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -33,7 +31,7 @@ export default function GrupoDetailPage() {
   const grupo_id = params.id as string;
   const { useGetGrupo, updateGrupo, deleteGrupo } = useGrupos();
   const { data: grupo, isLoading, error } = useGetGrupo(grupo_id);
-  const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] = useState<Partial<Grupo> | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,8 +55,9 @@ export default function GrupoDetailPage() {
       await updateGrupo.mutateAsync({ id: grupo_id, data: formData });
       toast.success('Grupo actualizado exitosamente');
       setIsEditing(false);
-    } catch (error: any) {
-      toast.error('Error al actualizar el grupo: ' + (error.message || 'Error desconocido'));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error('Error al actualizar el grupo: ' + errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -74,8 +73,9 @@ export default function GrupoDetailPage() {
       await deleteGrupo.mutateAsync(grupo_id);
       toast.success('Grupo eliminado exitosamente');
       router.push('/dashboard/grupos');
-    } catch (error: any) {
-      toast.error('Error al eliminar el grupo: ' + (error.message || 'Error desconocido'));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error('Error al eliminar el grupo: ' + errorMessage);
     } finally {
       setIsDeleting(false);
     }
@@ -257,7 +257,7 @@ export default function GrupoDetailPage() {
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Estado</label>
                     <Select
                       value={formData?.estado || ''}
-                      onValueChange={(value) => setFormData({ ...formData, estado: value })}
+                      onValueChange={(value) => setFormData({ ...formData, estado: value as "activo" | "inactivo" })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccionar estado" />

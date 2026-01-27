@@ -3,12 +3,6 @@
  */
 
 export const validatorsColombia = {
-  // Validate Colombian cedula (Cédula de Ciudadanía)
-  validateCedula: (cedula: string): boolean => {
-    const cedulaRegex = /^\d{8,11}$/
-    return cedulaRegex.test(cedula.replace(/\D/g, ''))
-  },
-
   // Validate Colombian phone number
   validateCelular: (celular: string): boolean => {
     const celularRegex = /^(\+57|0057|57)?[0-9]{10}$/

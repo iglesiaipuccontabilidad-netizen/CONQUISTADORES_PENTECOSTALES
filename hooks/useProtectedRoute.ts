@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './useAuth';
-import { User } from '../types';
+import { User } from '@supabase/supabase-js';
 
 interface UseProtectedRouteReturn {
   isLoading: boolean;
@@ -24,6 +24,6 @@ export function useProtectedRoute(): UseProtectedRouteReturn {
   return {
     isLoading: loading,
     isAuthenticated: !!session,
-    user: session?.user,
+    user: session?.user || null,
   };
 }

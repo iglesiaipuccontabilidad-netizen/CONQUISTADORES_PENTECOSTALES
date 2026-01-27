@@ -4,21 +4,24 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Gift, Send, Cake, ChevronRight, User, Phone, Search, PartyPopper, Bell, Clock } from 'lucide-react';
+import { Calendar, Gift, Send, Cake, User, Phone, Search, PartyPopper, Bell, Clock } from 'lucide-react';
 import { useCumpleanos } from '@/hooks/useCumpleanos';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Joven } from '@/types';
 
 export default function CumpleanosPage() {
-  const { isLoading, error, cumpleanosHoy, cumpleanosSemana, estadisticasMes, proximos30 } = useCumpleanos();
-  const [activeTab, setActiveTab] = useState<'hoy' | 'semana' | 'mes' | '30dias'>('hoy');
+  const { isLoading, error, cumpleanosHoy, cumpleanosSemana, estadisticasMes, jovenesPorMes, proximos30 } = useCumpleanos();
+  const [activeTab, setActiveTab] = useState<string>('hoy');
 
   const tabs = [
     { id: 'hoy', label: 'Hoy', count: cumpleanosHoy.length, icon: StarIcon },
     { id: 'semana', label: 'Esta Semana', count: cumpleanosSemana.reduce((acc, dia) => acc + dia.jovenes.length, 0), icon: Calendar },
     { id: 'mes', label: 'Este Mes', count: estadisticasMes.totalEnMes, icon: Clock },
-    { id: '30dias', label: 'Próximos 30 días', count: proximos30.length, icon: Bell },
+    { id: 'proximos30', label: 'Próximos 30 días', count: proximos30.length, icon: Bell },
   ];
+
+  const handleTabClick = (id: string) => setActiveTab(id);
 
   const handleEnviarFelicitacion = (joven: any) => {
     const message = encodeURIComponent(`¡Hola ${joven.nombre_completo}! 🎉 Que Dios te bendiga grandemente en este día de tu cumpleaños. Te deseamos lo mejor desde IPUC Conquistadores. 🙏🎂`);
@@ -79,13 +82,8 @@ export default function CumpleanosPage() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={cn(
-              "relative px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2",
-              activeTab === tab.id
-                ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
-                : "text-slate-500 hover:text-slate-900 hover:bg-white/40"
-            )}
+            className={cn("relative px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2", activeTab === tab.id ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-900 hover:bg-white/40")}
+            onClick={() => handleTabClick(tab.id)}
           >
             {activeTab === tab.id && (
               <motion.div layoutId="active-tab" className="absolute inset-0 bg-white rounded-xl -z-10" />
@@ -152,7 +150,7 @@ export default function CumpleanosPage() {
                         key={joven.id}
                         joven={joven}
                         onAction={() => handleEnviarFelicitacion(joven)}
-                        variant="week"
+                        variant="upcoming"
                       />
                     ))}
                   </div>
@@ -194,14 +192,55 @@ export default function CumpleanosPage() {
                 </div>
                 {/* List visualization for month */}
                 <div className="divide-y divide-slate-100">
-                  {/* Here we could map all users of the month, but it requires hook data structure */}
-                  <p className="py-12 text-center text-slate-400 font-medium italic">Mostrando resumen de {estadisticasMes.totalEnMes} celebraciones.</p>
+                  {jovenesPorMes.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4 mx-auto">
+                        <Calendar size={32} strokeWidth={1.5} />
+                      </div>
+                      <p className="text-slate-400 font-medium">No hay cumpleaños este mes</p>
+                    </div>
+                  ) : (
+                    jovenesPorMes.map((joven, index) => (
+                      <div key={joven.id} className="py-4 flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-md transition-all">
+                            <User size={24} strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-slate-900">{joven.nombre_completo}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+                                <Calendar size={12} />
+                                {new Date(joven.fecha_nacimiento).toLocaleDateString('es-ES', { 
+                                  day: 'numeric', 
+                                  month: 'long' 
+                                })} • {joven.edad} años
+                              </span>
+                              <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+                                <Phone size={12} />
+                                {joven.celular}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-10 rounded-xl hover:bg-blue-50 hover:text-blue-600 font-bold px-4" 
+                          onClick={() => handleEnviarFelicitacion(joven)}
+                        >
+                          <Send size={16} className="mr-2" />
+                          Felicitar
+                        </Button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </Card>
             </div>
           )}
 
-          {activeTab === '30dias' && (
+          {activeTab === 'proximos30' && (
             <Card className="overflow-hidden border-slate-200/60 shadow-xl shadow-slate-200/50 rounded-[2.5rem] bg-white">
               <div className="p-8 border-b border-slate-100 flex items-center justify-between">
                 <div>
@@ -247,7 +286,13 @@ export default function CumpleanosPage() {
   );
 }
 
-function BirthdayCard({ joven, onAction, variant = 'today' }: any) {
+interface BirthdayCardProps {
+  joven: any;
+  onAction: (joven: any) => void;
+  variant?: 'today' | 'upcoming';
+}
+
+function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps) {
   const isToday = variant === 'today';
 
   return (
@@ -317,8 +362,15 @@ function BirthdayCard({ joven, onAction, variant = 'today' }: any) {
   );
 }
 
-function MiniStatCard({ label, value, icon: Icon, color }: any) {
-  const colors: any = {
+interface MiniStatCardProps {
+  label: string;
+  value: number;
+  icon: React.ComponentType<any>;
+  color: string;
+}
+
+function MiniStatCard({ label, value, icon: Icon, color }: MiniStatCardProps) {
+  const colors: Record<string, string> = {
     blue: "text-blue-600 bg-blue-50 border-blue-100 shadow-blue-500/5",
     emerald: "text-emerald-600 bg-emerald-50 border-emerald-100 shadow-emerald-500/5",
     amber: "text-amber-600 bg-amber-50 border-amber-100 shadow-amber-500/5",

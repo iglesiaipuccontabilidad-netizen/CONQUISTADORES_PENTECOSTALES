@@ -3,6 +3,24 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useJovenes } from '@/hooks/useJovenes';
+
+// Función utilitaria para calcular edad precisa
+const calculateAge = (birthDate: string): number => {
+  if (!birthDate) return 0;
+  
+  const today = new Date();
+  const birth = new Date(birthDate);
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  // Si aún no ha llegado el cumpleaños este año, restar 1
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -39,16 +57,12 @@ import {
   Search,
   UserPlus,
   Filter,
-  MoreHorizontal,
-  Mail,
   Phone,
-  Calendar,
   ShieldCheck,
   Target,
   Zap,
   Heart,
   Users,
-  Award,
   Star,
   Sparkles,
   ArrowRight,
@@ -103,7 +117,7 @@ export default function JovenesPage() {
     if (edadFilter !== 'todos') {
       const [min, max] = edadFilter.split('-').map(Number);
       filtered = filtered.filter((joven) => {
-        const edad = joven.edad || 0;
+        const edad = calculateAge(joven.fecha_nacimiento);
         return edad >= min && (max ? edad <= max : true);
       });
     }
@@ -133,8 +147,7 @@ export default function JovenesPage() {
       let aValue: any, bValue: any;
       switch (sortField) {
         case 'nombre_completo': aValue = a.nombre_completo || ''; bValue = b.nombre_completo || ''; break;
-        case 'edad': aValue = a.edad || 0; bValue = b.edad || 0; break;
-        case 'cedula': aValue = a.cedula || ''; bValue = b.cedula || ''; break;
+        case 'edad': aValue = calculateAge(a.fecha_nacimiento); bValue = calculateAge(b.fecha_nacimiento); break;
         default: aValue = a.nombre_completo || ''; bValue = b.nombre_completo || '';
       }
       if (typeof aValue === 'string') { aValue = aValue.toLowerCase(); bValue = bValue.toLowerCase(); }
@@ -413,7 +426,6 @@ export default function JovenesPage() {
                         </div>
                       </button>
                     </TableHead>
-                    <TableHead className="font-black text-slate-900 uppercase tracking-[0.15em] text-[10px]">Identificación</TableHead>
                     <TableHead className="font-black text-slate-900 uppercase tracking-[0.15em] text-[10px]">Contacto</TableHead>
                     <TableHead className="font-black text-slate-900 uppercase tracking-[0.15em] text-[10px]">
                       <button onClick={() => handleSort('edad')} className="flex items-center gap-2 hover:text-blue-600 transition-colors group">
@@ -456,17 +468,8 @@ export default function JovenesPage() {
                                 <Link href={`/dashboard/jovenes/${joven.id}`} className="font-bold text-slate-900 text-base leading-tight group-hover:text-blue-600 transition-colors uppercase tracking-tight">
                                   {joven.nombre_completo}
                                 </Link>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Mail size={12} className="text-slate-400" />
-                                  <span className="text-xs text-slate-400 font-medium lowercase italic">{'sin-correo@sistema.com'}</span>
-                                </div>
                               </div>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-mono text-sm font-bold text-slate-600 bg-slate-100/80 px-3 py-1.5 rounded-xl border border-slate-200/50">
-                              {joven.cedula || '----------'}
-                            </span>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1.5">
@@ -483,7 +486,7 @@ export default function JovenesPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="text-xl font-black text-slate-900 tracking-tight leading-none">{joven.edad || '??'}</span>
+                              <span className="text-xl font-black text-slate-900 tracking-tight leading-none">{calculateAge(joven.fecha_nacimiento)}</span>
                               <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Años</span>
                             </div>
                           </TableCell>

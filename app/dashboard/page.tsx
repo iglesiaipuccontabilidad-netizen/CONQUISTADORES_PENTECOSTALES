@@ -7,7 +7,6 @@ import { useJovenes } from '@/hooks/useJovenes';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Users,
-  TrendingUp,
   UserPlus,
   Target,
   ShieldCheck,
@@ -15,7 +14,6 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   BarChart3,
-  Search,
   ArrowUpRight,
   Zap,
   Clock,

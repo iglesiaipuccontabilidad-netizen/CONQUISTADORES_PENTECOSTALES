@@ -174,7 +174,7 @@ export const useCumpleanos = () => {
     queryKey: ['cumpleanos-jovenes'],
     queryFn: async () => {
       const { data } = await apiClient.get<unknown>('/jovenes')
-      return data.jovenes || data.data || []
+      return (data as any).jovenes || (data as any).data || []
     },
   })
 

@@ -32,12 +32,12 @@ import {
   Shield,
   Calendar,
   Layers,
-  MoreVertical,
   ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Grupo } from '@/types';
 
 // Mock data
 const mockGrupos = [
@@ -66,7 +66,7 @@ const mockGrupos = [
 export default function GruposPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedGrupo, setSelectedGrupo] = useState<any>(null);
+  const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Mock loading state
@@ -91,7 +91,7 @@ export default function GruposPage() {
       toast.success('Grupo eliminado correctamente');
       setDeleteDialogOpen(false);
       setSelectedGrupo(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error al intentar eliminar el grupo');
     } finally {
       setIsDeleting(false);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Joven } from '../../types'
 import { Button } from '@/components/ui/button'
@@ -19,8 +20,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { registroJovenSchema, RegistroJovenFormType } from '../../utils/schemas'
+import { registroJovenSchema } from '../../utils/schemas'
 import { validatorsColombia } from '@/utils/validators'
+
+type RegistroJovenFormType = z.infer<typeof registroJovenSchema>
 import apiClient from '@/utils/api-client'
 import { toast } from 'sonner'
 import {
@@ -72,7 +75,7 @@ export default function RegistroPage() {
     return () => console.log('Component unmounted')
   }, [])
 
-  const form = useForm<z.infer<typeof registroJovenSchema>>({
+  const form = useForm<RegistroJovenFormType>({
     resolver: zodResolver(registroJovenSchema),
     defaultValues: {
       nombre_completo: '',
@@ -144,18 +147,18 @@ export default function RegistroPage() {
         toast.success('¡Registro completado exitosamente!')
         console.log('Toast shown and completado set to true')
       } else {
-        console.log('Registration failed:', (response.data as unknown).message || (response.data as unknown).error)
-        toast.error((response.data as unknown).message || (response.data as unknown).error || 'Error al procesar el registro')
+        console.log('Registration failed:', (response.data as RegistroResponse).message || (response.data as RegistroResponse).error)
+        toast.error((response.data as RegistroResponse).message || (response.data as RegistroResponse).error || 'Error al procesar el registro')
         setIsSubmitting(false) // Allow retry on error
         hasSubmittedRef.current = false // Allow retry on error
       }
     } catch (error) {
       console.log('API call failed:', error)
       console.log('Error details:', {
-        message: (error as unknown)?.message,
-        response: (error as unknown)?.response?.data,
-        status: (error as unknown)?.response?.status,
-        statusText: (error as unknown)?.response?.statusText
+        message: (error as any)?.message,
+        response: (error as any)?.response?.data,
+        status: (error as any)?.response?.status,
+        statusText: (error as any)?.response?.statusText
       })
       toast.error('Ocurrió un error inesperado. Inténtalo de nuevo.')
       setIsSubmitting(false) // Allow retry on error
@@ -529,7 +532,7 @@ export default function RegistroPage() {
                             <FormField
                               key={item.id}
                               control={form.control}
-                              name={`consentimientos.${item.id}` as const}
+                              name={`consentimientos.${item.id}` as any}
                               render={({ field }) => (
                                 <FormItem
                                   onClick={() => field.onChange(!field.value)}

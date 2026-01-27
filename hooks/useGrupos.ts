@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../utils/api-client'
-import { Grupo, ApiResponse } from '../types'
+import { Grupo, ApiResponse } from '../types/index'
 
 export const useGrupos = () => {
   const queryClient = useQueryClient()
@@ -12,7 +12,7 @@ export const useGrupos = () => {
     queryKey: ['grupos'],
     queryFn: async () => {
       const { data } = await apiClient.get<unknown>('/grupos')
-      return data.grupos || data.data || []
+      return (data as any).grupos || (data as any).data || []
     },
   })
 
@@ -26,17 +26,17 @@ export const useGrupos = () => {
           console.log('📡 API Response:', data)
 
           // La API devuelve { status: 'success', grupo: { ... } }
-          if (data?.status === 'success' && data?.grupo) {
-            console.log('✅ Found grupo:', data.grupo)
-            return data.grupo as Grupo
+          if ((data as any)?.status === 'success' && (data as any)?.grupo) {
+            console.log('✅ Found grupo:', (data as any).grupo)
+            return (data as any).grupo as Grupo
           }
 
           // Fallback para otras estructuras
-          const result = data?.grupo || data?.data || (data && !data.status ? data : null)
+          const result = (data as any)?.grupo || (data as any)?.data || ((data as any) && !(data as any).status ? (data as any) : null)
           console.log('✅ Extracted result:', result)
           return result as Grupo | null
         } catch (error: unknown) {
-          console.error('❌ Error fetching grupo details:', error.response?.data || error.message || error)
+          console.error('❌ Error fetching grupo details:', (error as any)?.response?.data || (error as any)?.message || error)
           return null
         }
       },

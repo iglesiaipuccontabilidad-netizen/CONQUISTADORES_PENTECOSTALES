@@ -6,7 +6,6 @@ import { useJovenes } from '@/hooks/useJovenes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
@@ -25,15 +24,15 @@ import {
   CheckCircle2,
   Clock,
   Mail,
-  MoreVertical,
   Activity,
   FileCheck
 } from 'lucide-react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Joven } from '@/types';
 
 export default function JovenDetailPage() {
   const params = useParams();
@@ -54,20 +53,21 @@ export default function JovenDetailPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: any) => ({
+    setFormData((prev: Partial<Joven> | null) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
-    setFormData((prev: any) => ({
+    setFormData((prev: Partial<Joven> | null) => ({
       ...prev,
       [field]: checked,
     }));
   };
 
   const handleSave = async () => {
+    if (!formData) return;
     setIsSaving(true);
     try {
       await updateJoven.mutateAsync({
@@ -83,8 +83,9 @@ export default function JovenDetailPage() {
       });
       toast.success('Joven actualizado correctamente');
       setIsEditing(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Error al actualizar');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar';
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -238,7 +239,6 @@ export default function JovenDetailPage() {
                           {formData.nombre_completo}
                         </h2>
                         <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                          <Badge icon={IdCard} label={formData.cedula} color="blue" />
                           <Badge icon={Calendar} label={`${formData.edad ?? '—'} Años`} color="slate" />
                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-black uppercase tracking-widest">
                             <CheckCircle2 size={12} />
@@ -264,6 +264,9 @@ export default function JovenDetailPage() {
                       icon={Mail}
                       label="Estado del Registro"
                       value={formData.estado === 'activo' ? 'Verificado' : 'Pendiente'}
+                      isEditing={false}
+                      name=""
+                      onChange={() => {}}
                       disabled
                     />
                   </div>
@@ -272,12 +275,6 @@ export default function JovenDetailPage() {
                       icon={Calendar}
                       label="Fecha de Nacimiento"
                       value={formData.fecha_nacimiento ? format(new Date(formData.fecha_nacimiento), 'dd MMMM, yyyy', { locale: es }) : 'No registra'}
-                      disabled
-                    />
-                    <DetailItem
-                      icon={IdCard}
-                      label="Documento de Identidad"
-                      value={formData.cedula}
                       disabled
                     />
                   </div>
@@ -419,7 +416,17 @@ export default function JovenDetailPage() {
   );
 }
 
-function DetailItem({ icon: Icon, label, value, isEditing, name, onChange, disabled }: any) {
+interface DetailItemProps {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  value: string;
+  isEditing?: boolean;
+  name?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
+}
+
+function DetailItem({ icon: Icon, label, value, isEditing, name, onChange, disabled }: DetailItemProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -440,7 +447,20 @@ function DetailItem({ icon: Icon, label, value, isEditing, name, onChange, disab
   );
 }
 
-function StatusToggle({ id, icon: Icon, label, description, checked, onChange, isEditing, activeColor, activeBg, activeBorder }: any) {
+interface StatusToggleProps {
+  id: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  isEditing: boolean;
+  activeColor: string;
+  activeBg: string;
+  activeBorder: string;
+}
+
+function StatusToggle({ id, icon: Icon, label, description, checked, onChange, isEditing, activeColor, activeBg, activeBorder }: StatusToggleProps) {
   return (
     <div
       className={cn(
@@ -493,8 +513,14 @@ function ConsentBadge({ label, status }: { label: string, status?: boolean }) {
   );
 }
 
-function Badge({ icon: Icon, label, color }: { icon: any, label: string, color: string }) {
-  const families: any = {
+interface BadgeProps {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  label: string;
+  color: string;
+}
+
+function Badge({ icon: Icon, label, color }: BadgeProps) {
+  const families: Record<string, string> = {
     blue: "bg-blue-100 text-blue-700 border-blue-200",
     slate: "bg-slate-100 text-slate-700 border-slate-200",
   };

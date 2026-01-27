@@ -10,7 +10,7 @@ export interface Joven {
   servidor: boolean;
   simpatizante: boolean;
   consentimiento_datos_personales: boolean;
-  estado: 'activo' | 'inactivo' | 'suspendido';
+  estado: 'activo' | 'inactivo';
   grupo_id?: string;
   created_at: string;
   updated_at: string;
@@ -27,18 +27,18 @@ export interface Grupo {
   estado: 'activo' | 'inactivo';
   created_at: string;
   updated_at: string;
-  created_by: string;
-  updated_by: string;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface User {
   id: string;
   email: string;
   nombre_completo: string;
-  telefono?: string;
-  estado: 'activo' | 'inactivo' | 'suspendido';
+  telefono: string;
+  estado: 'activo' | 'inactivo';
   rol: 'admin' | 'lider' | 'usuario' | 'visitante';
-  ultima_sesion?: string;
+  ultima_sesion: string | null;
   created_at: string;
   updated_at: string;
 }

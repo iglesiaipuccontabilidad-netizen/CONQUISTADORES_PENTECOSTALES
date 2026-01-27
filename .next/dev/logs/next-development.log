@@ -1,14 +1,19 @@
-[00:00:27.113] Server  LOG     ✓ Ready in 22.3s
-[00:00:30.346] Server  LOG     ○ Compiling / ...
-[00:01:26.022] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:01:35.061] Server  LOG     ✓ Finished writing to filesystem cache in 14.0s
-[00:05:46.106] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:10:48.438] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:11:28.278] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:12:06.729] Server  LOG     ✓ Compiled in 29.7s
-[00:12:11.740] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:12:12.456] Server  LOG     ✓ Compiled in 627ms
-[00:12:24.899] Server  LOG     ✓ Finished writing to filesystem cache in 16.4s
-[00:12:49.281] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:13:36.592] Server  LOG     ✓ Compiled in 3.9s
-[00:13:48.488] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:06.897] Server  LOG     ✓ Ready in 3.7s
+[00:00:09.992] Server  LOG     ○ Compiling /dashboard/cumpleanos ...
+[00:00:15.205] Browser LOG     API Client: Adding token to request /jovenes
+[00:00:15.205] Browser LOG     API Client: Session data {"hasSession":true,"hasToken":true}
+[00:00:15.205] Browser LOG     API Client: Token added to Authorization header
+[00:01:15.647] Server  LOG     ✓ Compiled in 2.5s
+[00:01:23.909] Server  LOG     ✓ Compiled in 346ms
+[00:01:31.191] Server  LOG     ✓ Compiled in 1057ms
+[00:01:42.357] Browser LOG     API Client: Adding token to request /jovenes
+[00:01:42.358] Browser LOG     API Client: Session data {"hasSession":true,"hasToken":true}
+[00:01:42.358] Browser LOG     API Client: Token added to Authorization header
+[00:01:48.497] Server  LOG     ✓ Compiled in 963ms
+[00:02:01.161] Server  LOG     ✓ Compiled in 1004ms
+[00:07:41.987] Server  LOG     ✓ Compiled in 1860ms
+[00:08:50.171] Server  LOG     ✓ Compiled in 184ms
+[00:12:25.258] Server  LOG     ✓ Compiled in 745ms
+[00:12:25.397] Browser LOG     API Client: Adding token to request /jovenes
+[00:12:27.557] Browser LOG     API Client: Session data {"hasSession":true,"hasToken":true}
+[00:12:27.558] Browser LOG     API Client: Token added to Authorization header

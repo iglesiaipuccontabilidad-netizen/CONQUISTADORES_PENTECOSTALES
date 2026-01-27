@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../utils/api-client'
-import { Joven, ApiResponse, RegistroJovenFormData } from '../types'
+import { Joven, ApiResponse, RegistroJovenFormData } from '../types/index'
 
 export const useJovenes = () => {
   const queryClient = useQueryClient()
@@ -12,7 +12,7 @@ export const useJovenes = () => {
     queryKey: ['jovenes'],
     queryFn: async () => {
       const { data } = await apiClient.get<unknown>('/jovenes')
-      return data.jovenes || data.data || []
+      return (data as any).jovenes || (data as any).data || []
     },
   })
 
@@ -26,7 +26,7 @@ export const useJovenes = () => {
           console.log('📡 API Response Body:', data)
 
           // El backend devuelve { status: 'success', joven: { ... } }
-          const result = data?.joven || data?.data || (data && !data.status ? data : null)
+          const result = (data as any)?.joven || (data as any)?.data || ((data as any) && !(data as any).status ? (data as any) : null)
 
           console.log('✅ Extracted Joven:', result)
 
@@ -36,7 +36,7 @@ export const useJovenes = () => {
 
           return result as Joven | null
         } catch (error: unknown) {
-          console.error('❌ Error fetching joven details:', error.response?.data || error.message || error)
+          console.error('❌ Error fetching joven details:', (error as any).response?.data || (error as any).message || error)
           return null
         }
       },

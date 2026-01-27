@@ -20,7 +20,6 @@ export interface Joven {
   nombre_completo: string
   fecha_nacimiento: string
   edad?: number
-  cedula: string
   celular: string
   bautizado: boolean
   sellado: boolean
@@ -73,7 +72,6 @@ export interface RegistroJovenFormData {
   nombre: string
   fecha_nacimiento: string
   edad: number
-  cedula: string
   celular: string
   estados: string[]
   consentimientos: {

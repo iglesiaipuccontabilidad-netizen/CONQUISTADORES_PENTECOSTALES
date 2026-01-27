@@ -57,8 +57,9 @@ export default function NewGrupoPage() {
       console.log('Crear grupo:', data);
       toast.success('Grupo creado correctamente');
       router.push('/dashboard/grupos');
-    } catch (error: any) {
-      toast.error(error.message || 'Error al crear grupo');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear grupo';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

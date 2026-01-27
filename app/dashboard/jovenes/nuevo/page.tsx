@@ -16,7 +16,6 @@ import { z } from 'zod';
 
 const createJovenSchema = z.object({
   nombre_completo: z.string().min(3, 'Mínimo 3 caracteres'),
-  cedula: z.string().regex(/^\d{8,11}$/, 'Cédula inválida'),
   celular: z.string().regex(/^(\+57|0057|57)?[0-9]{10}$/, 'Celular inválido'),
   fecha_nacimiento: z.string(),
   bautizado: z.boolean(),
@@ -103,34 +102,19 @@ export default function NewJovenPage() {
             )}
           </div>
 
-          {/* Cédula y Celular */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">
-                Cédula *
-              </label>
-              <Input
-                {...register('cedula')}
-                placeholder="Ej: 12345678"
-                className={errors.cedula ? 'border-red-500' : ''}
-              />
-              {errors.cedula && (
-                <p className="text-red-500 text-sm mt-1">{errors.cedula.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">
-                Celular *
-              </label>
-              <Input
-                {...register('celular')}
-                placeholder="Ej: 3001234567"
-                className={errors.celular ? 'border-red-500' : ''}
-              />
-              {errors.celular && (
-                <p className="text-red-500 text-sm mt-1">{errors.celular.message}</p>
-              )}
-            </div>
+          {/* Celular */}
+          <div>
+            <label className="block text-sm font-medium text-slate-900 mb-2">
+              Celular *
+            </label>
+            <Input
+              {...register('celular')}
+              placeholder="Ej: 3001234567"
+              className={errors.celular ? 'border-red-500' : ''}
+            />
+            {errors.celular && (
+              <p className="text-red-500 text-sm mt-1">{errors.celular.message}</p>
+            )}
           </div>
 
           {/* Fecha de Nacimiento */}

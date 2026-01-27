@@ -32,9 +32,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Activity,
   Trash2,
-  Search,
-  Calendar,
-  User,
   Database,
   Eye,
   Download
@@ -50,7 +47,7 @@ const mockActivityLogs = [
     registro_id: '123',
     fecha: '2024-01-19 10:30:00',
     ip: '192.168.1.100',
-    detalles: { nombre_completo: 'Juan Pérez', cedula: '12345678' }
+    detalles: { nombre_completo: 'Juan Pérez', celular: '3001234567' }
   },
   {
     id: '2',
@@ -84,8 +81,7 @@ const mockDeletionHistory = [
     fecha: '2024-01-19 12:00:00',
     datos_eliminados: {
       nombre_completo: 'María García',
-      cedula: '87654321',
-      celular: '3019876543',
+      celular: '3009876543',
       fecha_nacimiento: '2000-05-15'
     }
   },
