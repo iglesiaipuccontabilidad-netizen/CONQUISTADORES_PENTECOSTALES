@@ -23,7 +23,7 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 }
 
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -398,7 +398,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // Soft delete - marcar como eliminado
-      const { data: deletedJoven, error } = await supabase
+      const { data: _deletedJoven, error } = await supabase
         .from('jovenes')
         .update({ estado: 'eliminado' })
         .eq('id', joven_id)

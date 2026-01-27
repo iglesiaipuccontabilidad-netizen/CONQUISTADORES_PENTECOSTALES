@@ -1,12 +1,12 @@
 {
-  "name": "frontend",
+  "name": "conquistadores-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cd frontend && next dev",
-    "build": "cd frontend && next build",
-    "start": "cd frontend && next start",
-    "lint": "cd frontend && eslint"
+    "dev": "next dev",
+    "build": "next build", 
+    "start": "next start",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

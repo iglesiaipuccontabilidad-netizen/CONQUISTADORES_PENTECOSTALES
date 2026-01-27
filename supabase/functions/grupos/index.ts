@@ -17,7 +17,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 }
 
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -99,7 +99,7 @@ Deno.serve(async (req: Request) => {
 
     return errorResponse('Ruta no encontrada', 404)
 
-  } catch (error) {
+  } catch (_error) {
     return errorResponse('Error interno del servidor', 500)
   }
 })

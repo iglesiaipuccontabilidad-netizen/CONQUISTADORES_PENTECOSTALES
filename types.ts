@@ -23,6 +23,7 @@ export interface Grupo {
   nombre: string;
   descripcion?: string;
   lider_id: string;
+  lider?: User;
   estado: 'activo' | 'inactivo';
   created_at: string;
   updated_at: string;
@@ -40,4 +41,19 @@ export interface User {
   ultima_sesion?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface RegistroJovenFormData {
+  nombre: string
+  fecha_nacimiento: string
+  edad: number
+  cedula: string
+  celular: string
+  estados: string[]
+  consentimientos: {
+    datos_personales: boolean
+    whatsapp: boolean
+    procesamiento: boolean
+    terminos: boolean
+  }
 }

@@ -22,7 +22,7 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400',
 }
 
-function jsonResponse(data: any, status = 200) {
+function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -48,10 +48,6 @@ function validatePassword(password: string): boolean {
 
 function validateCelular(celular: string): boolean {
   return /^\+57\d{10}$/.test(celular)
-}
-
-function validateCedula(cedula: string): boolean {
-  return /^\d{8,10}$/.test(cedula)
 }
 
 // ============================================
@@ -576,7 +572,7 @@ Deno.serve(async (req) => {
       }
 
       // Soft delete - marcar como eliminado
-      const { data: deletedJoven, error } = await supabase
+      const { data: _deletedJoven, error } = await supabase
         .from('jovenes')
         .update({ estado: 'eliminado' })
         .eq('id', joven_id)
@@ -908,7 +904,7 @@ Deno.serve(async (req) => {
       }
 
       // Soft delete - marcar como eliminado
-      const { data: deletedUser, error } = await supabase
+      const { data: _deletedUser, error } = await supabase
         .from('users')
         .update({ estado: 'eliminado' })
         .eq('id', usuario_id)
@@ -1038,12 +1034,12 @@ Deno.serve(async (req) => {
       }
 
       // Convertir a objeto
-      const configObj = {}
-      config?.forEach((item: any) => {
+      const configObj: Record<string, unknown> = {}
+      config?.forEach((item: Record<string, unknown>) => {
         try {
-          configObj[item.clave] = typeof item.valor === 'string' ? JSON.parse(item.valor) : item.valor
+          configObj[item.clave as string] = typeof item.valor === 'string' ? JSON.parse(item.valor as string) : item.valor
         } catch {
-          configObj[item.clave] = item.valor
+          configObj[item.clave as string] = item.valor
         }
       })
 
