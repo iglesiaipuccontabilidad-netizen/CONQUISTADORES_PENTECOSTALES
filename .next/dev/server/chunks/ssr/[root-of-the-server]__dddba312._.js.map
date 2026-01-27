@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///home/juanda/conquistadores-app/app/providers.tsx"],"sourcesContent":["'use client'\n\nimport { ReactNode, useState } from 'react'\nimport { QueryClient, QueryClientProvider } from '@tanstack/react-query'\n\nexport function Providers({ children }: { children: ReactNode }) {\n  const [queryClient] = useState(\n    () =>\n      new QueryClient({\n        defaultOptions: {\n          queries: {\n            staleTime: 1000 * 60 * 5, // 5 minutes\n            gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)\n          },\n        },\n      })\n  )\n\n  return (\n    <QueryClientProvider client={queryClient}>\n      {children}\n    </QueryClientProvider>\n  )\n}\n"],"names":[],"mappings":";;;;;AAEA;AACA;AAAA;AAHA;;;;AAKO,SAAS,UAAU,EAAE,QAAQ,EAA2B;IAC7D,MAAM,CAAC,YAAY,GAAG,IAAA,iNAAQ,EAC5B,IACE,IAAI,4LAAW,CAAC;YACd,gBAAgB;gBACd,SAAS;oBACP,WAAW,OAAO,KAAK;oBACvB,QAAQ,OAAO,KAAK;gBACtB;YACF;QACF;IAGJ,qBACE,8OAAC,6MAAmB;QAAC,QAAQ;kBAC1B;;;;;;AAGP"}}]
-}
