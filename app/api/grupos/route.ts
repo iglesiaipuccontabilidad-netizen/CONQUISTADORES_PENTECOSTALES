@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('grupos')
-      .select('*, lider:users(id, nombre_completo, email)')
+      .select('*, lider:users!grupos_lider_id_fkey(id, nombre_completo, email)')
       .eq('estado', 'activo')
       .order('nombre')
 

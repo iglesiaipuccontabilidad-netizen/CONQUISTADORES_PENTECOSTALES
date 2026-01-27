@@ -43,10 +43,10 @@ export async function GET(
       .from('grupos')
       .select(`
         *,
-        lider:users(id, nombre_completo, email),
+        lider:users!grupos_lider_id_fkey(id, nombre_completo, email),
         jovenes:jovenes(id, nombre_completo, fecha_nacimiento, bautizado, sellado, servidor)
       `)
-      .eq('id', grupo_id)
+      .eq('id', id)
       .single()
 
     if (error || !grupo) {
