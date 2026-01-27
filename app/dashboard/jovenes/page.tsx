@@ -92,10 +92,14 @@ interface BadgeProps {
 
 export default function JovenesPage() {
   const { jovenes, isLoading, deleteJoven } = useJovenes();
+  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedJoven, setSelectedJoven] = useState<Joven | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Verificar si el usuario está autenticado
+  const canDelete = !!currentUser && currentUser.estado === 'activo';
 
   // Filtros
   const [edadFilter, setEdadFilter] = useState<string>('todos');
@@ -208,20 +212,38 @@ export default function JovenesPage() {
   };
 
   const handleDeleteClick = (joven: Joven) => {
+    if (!canDelete) {
+      toast.error('Debes estar autenticado para eliminar jóvenes');
+      return;
+    }
     setSelectedJoven(joven);
     setDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
     if (!selectedJoven) return;
+    if (!canDelete) {
+      toast.error('Debes estar autenticado para eliminar jóvenes');
+      return;
+    }
     setIsDeleting(true);
     try {
+      console.log('🗑️ Iniciando eliminación de joven:', selectedJoven.id);
       await deleteJoven.mutateAsync(selectedJoven.id);
       toast.success('Joven eliminado correctamente');
       setDeleteDialogOpen(false);
       setSelectedJoven(null);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al eliminar';
+    } catch (error: any) {
+      console.error('💥 Error al eliminar joven:', error);
+      
+      let errorMessage = 'Error al eliminar';
+      if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      console.log('📤 Mostrando error al usuario:', errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -258,8 +280,18 @@ export default function JovenesPage() {
             Directorio <span className="text-blue-600">Jóvenes</span>
             <Sparkles className="text-amber-400 h-8 w-8 animate-pulse" />
           </h1>
-          <p className="text-slate-500 font-medium mt-2 text-lg">
+          <p className="text-slate-500 font-medium mt-2 text-lg flex items-center gap-2">
             Gestiona la comunidad de Conquistadores con herramientas avanzadas.
+            {currentUser && (
+              <span className={cn(
+                "text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wider",
+                currentUser.rol === 'admin'
+                  ? "bg-emerald-100 text-emerald-700" 
+                  : "bg-blue-100 text-blue-700"
+              )}>
+                {currentUser.rol} • Autenticado
+              </span>
+            )}
           </p>
         </motion.div>
 
@@ -534,12 +566,14 @@ export default function JovenesPage() {
                                   <Edit2 size={20} />
                                 </button>
                               </Link>
-                              <button
-                                onClick={() => handleDeleteClick(joven)}
-                                className="h-11 w-11 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-rose-600 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm hover:shadow-lg hover:shadow-rose-200"
-                              >
-                                <Trash2 size={20} />
-                              </button>
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleDeleteClick(joven)}
+                                  className="h-11 w-11 flex items-center justify-center rounded-2xl bg-white border border-slate-100 text-rose-600 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm hover:shadow-lg hover:shadow-rose-200"
+                                >
+                                  <Trash2 size={20} />
+                                </button>
+                              )}
                             </div>
                           </TableCell>
                         </motion.tr>

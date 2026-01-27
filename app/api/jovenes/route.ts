@@ -133,17 +133,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Solo admin puede crear jóvenes desde el dashboard
+    // Verificar que el usuario existe en la tabla users
     const { data: currentUser } = await supabase
       .from('users')
       .select('rol')
       .eq('id', user.id)
       .single()
 
-    if (currentUser?.rol !== 'admin') {
+    if (!currentUser) {
       return NextResponse.json(
-        { error: 'No tienes permisos para crear jóvenes' },
-        { status: 403 }
+        { error: 'Usuario no encontrado' },
+        { status: 404 }
       )
     }
 

@@ -105,17 +105,17 @@ export async function PUT(
       )
     }
 
-    // Verificar permisos
+    // Verificar que el usuario existe en la tabla users
     const { data: currentUser } = await supabase
       .from('users')
       .select('rol, id')
       .eq('id', user.id)
       .single()
 
-    if (!currentUser || (currentUser.rol !== 'admin' && currentUser.rol !== 'lider')) {
+    if (!currentUser) {
       return NextResponse.json(
-        { error: 'No tienes permisos para actualizar jóvenes' },
-        { status: 403 }
+        { error: 'Usuario no encontrado' },
+        { status: 404 }
       )
     }
 
@@ -154,9 +154,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  console.log('🗑️ DELETE request for joven ID:', id);
+  
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ No authorization header found');
       return NextResponse.json(
         { error: 'Token de autorización requerido' },
         { status: 401 }
@@ -165,43 +168,54 @@ export async function DELETE(
 
     const token = authHeader.split('Bearer ')[1]
     const joven_id = id
+    console.log('🔑 Token presente, verificando con Supabase...');
 
     // Verificar token con Supabase Auth
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) {
+      console.log('❌ Token inválido:', authError?.message);
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
       )
     }
+    
+    console.log('✅ Usuario autenticado:', user.email, 'ID:', user.id);
 
-    // Solo admin puede eliminar
+    // Verificar que el usuario existe en la tabla users
     const { data: currentUser } = await supabase
       .from('users')
       .select('rol')
       .eq('id', user.id)
       .single()
 
-    if (currentUser?.rol !== 'admin') {
+    if (!currentUser) {
+      console.log('❌ Usuario no encontrado en tabla users');
       return NextResponse.json(
-        { error: 'Solo los administradores pueden eliminar jóvenes' },
-        { status: 403 }
+        { error: 'Usuario no encontrado' },
+        { status: 404 }
       )
     }
+    
+    console.log('✅ Usuario válido, rol:', currentUser.rol);
+    console.log('🗑️ Intentando eliminar joven con ID:', joven_id);
 
     // En lugar de eliminar, marcar como inactivo
-    const { error } = await supabase
+    const { data: result, error } = await supabase
       .from('jovenes')
       .update({ estado: 'inactivo' })
       .eq('id', joven_id)
+      .select()
 
     if (error) {
-      console.error('Error al eliminar joven:', error)
+      console.error('💥 Error al eliminar joven:', error);
       return NextResponse.json(
-        { error: 'Error al eliminar joven' },
+        { error: `Error al eliminar joven: ${error.message}` },
         { status: 500 }
       )
     }
+    
+    console.log('✅ Joven marcado como inactivo:', result);
 
     return NextResponse.json({
       success: true,
@@ -214,7 +228,7 @@ export async function DELETE(
       }
     })
   } catch (error) {
-    console.error('Error en DELETE /api/jovenes/[id]:', error)
+    console.error('💥 Error en DELETE /api/jovenes/[id]:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

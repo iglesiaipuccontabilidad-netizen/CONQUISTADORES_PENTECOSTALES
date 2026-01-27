@@ -39,11 +39,21 @@ apiClient.interceptors.request.use(async (config) => {
 
 // Handle errors
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ API Response [${response.status}] ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    return response;
+  },
   (error: AxiosError<ApiErrorResponse>) => {
+    console.error(`❌ API Error [${error.response?.status}] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
     if (error.response?.status === 401) {
       // Handle unauthorized
       localStorage.removeItem('auth_token')
+      console.log('🔑 Token removed due to 401 error');
     }
     return Promise.reject(error)
   }
