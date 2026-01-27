@@ -67,7 +67,7 @@ export default function EditJovenPage() {
         fecha_nacimiento: joven.fecha_nacimiento || '',
         cedula: joven.cedula || '',
         celular: joven.celular || '',
-        grupo_id: joven.grupo_id || '',
+        grupo_id: joven.grupo_id || 'none',
         bautizado: joven.bautizado || false,
         sellado: joven.sellado || false,
         servidor: joven.servidor || false,
@@ -113,7 +113,7 @@ export default function EditJovenPage() {
           fecha_nacimiento: formData.fecha_nacimiento,
           cedula: formData.cedula,
           celular: formData.celular,
-          grupo_id: formData.grupo_id || null,
+          grupo_id: formData.grupo_id === 'none' ? null : formData.grupo_id,
           bautizado: formData.bautizado,
           sellado: formData.sellado,
           servidor: formData.servidor,
@@ -331,7 +331,7 @@ export default function EditJovenPage() {
                   <SelectValue placeholder="Seleccionar grupo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin grupo</SelectItem>
+                  <SelectItem value="none">Sin grupo</SelectItem>
                   {grupos?.map((grupo) => (
                     <SelectItem key={grupo.id} value={grupo.id}>
                       {grupo.nombre}
