@@ -261,7 +261,8 @@ export default function ConfiguracionPage() {
               <Textarea
                 value={config.emailsAdmins.join('\n')}
                 onChange={(e) => setConfig({...config, emailsAdmins: e.target.value.split('\n')})}
-                placeholder="admin1@email.com&#10;admin2@email.com"
+                placeholder="admin1@email.com
+admin2@email.com"
                 rows={3}
               />
             </div>
