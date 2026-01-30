@@ -105,7 +105,7 @@ Authorization: Bearer {jwt_token} (required)
     "id": "uuid",
     "email": "usuario@ejemplo.com",
     "nombre_completo": "Juan Pérez",
-    "telefono": "+573001234567",
+    "telefono": "3001234567",
     "rol": "admin",
     "estado": "activo",
     "ultima_sesion": "2026-01-19T10:30:00Z",
@@ -146,7 +146,7 @@ curl -X POST https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/re
 {
   "nombre_completo": "string (required, min 3 chars)",
   "fecha_nacimiento": "date (required, ISO 8601)",
-  "celular": "string (required, format: +57XXXXXXXXXX)",
+  "celular": "string (required, format: 10 dígitos)",
   "grupo_id": "uuid (optional, auto-assign if not provided)",
   "bautizado": "boolean (optional, default: false)",
   "sellado": "boolean (optional, default: false)",
@@ -183,7 +183,7 @@ curl -X POST https://dcgkzuouqeznxtfzgdil.supabase.co/functions/v1/auth/joven/re
 
 **Errors**:
 - `400`: Nombre inválido (< 3 caracteres)
-- `400`: Celular inválido (debe ser +57XXXXXXXXXX)
+- `400`: Celular inválido (debe ser 10 dígitos)
 - `400`: Edad fuera de rango (debe estar entre 12-35 años)
 - `400`: Consentimientos incompletos (todos requeridos)
 - `500`: Error al registrar joven
@@ -226,8 +226,8 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - Ejemplo: `12345678`
 
 ### Celular
-- Formato: `+57` (código país) + `10 dígitos`
-- Ejemplo: `+573001234567`
+- Formato: `10 dígitos`
+- Ejemplo: `3001234567`
 
 ### Edad
 - Mínimo: 12 años
@@ -315,7 +315,7 @@ const registroResponse = await fetch(
       nombre_completo: 'Maria García',
       fecha_nacimiento: '2010-05-15',
       cedula: '12345678',
-      celular: '+573001234567',
+      celular: '3001234567',
       consentimiento_datos_personales: true,
       consentimiento_whatsapp: true,
       consentimiento_procesamiento: true,

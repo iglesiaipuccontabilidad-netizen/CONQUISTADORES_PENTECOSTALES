@@ -5,7 +5,7 @@
 export const validatorsColombia = {
   // Validate Colombian phone number
   validateCelular: (celular: string): boolean => {
-    const celularRegex = /^(\+57|0057|57)?[0-9]{10}$/
+    const celularRegex = /^[0-9]{10}$/
     return celularRegex.test(celular.replace(/\D/g, ''))
   },
 
@@ -13,10 +13,7 @@ export const validatorsColombia = {
   formatCelular: (celular: string): string => {
     const digits = celular.replace(/\D/g, '')
     if (digits.length === 10) {
-      return `+57${digits}`
-    }
-    if (digits.length === 12 && digits.startsWith('57')) {
-      return `+${digits}`
+      return digits
     }
     return celular
   },

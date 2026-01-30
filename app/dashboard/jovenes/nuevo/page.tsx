@@ -16,19 +16,21 @@ import { z } from 'zod';
 
 const createJovenSchema = z.object({
   nombre_completo: z.string().min(3, 'Mínimo 3 caracteres'),
-  celular: z.string().regex(/^(\+57|0057|57)?[0-9]{10}$/, 'Celular inválido'),
-  fecha_nacimiento: z.string(),
+  celular: z.string().regex(/^[0-9]{10}$/, 'El celular debe tener 10 dígitos (ej: 3113678555)'),
+  fecha_nacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
+  direccion: z.string().optional(),
   bautizado: z.boolean(),
   sellado: z.boolean(),
   servidor: z.boolean(),
   simpatizante: z.boolean(),
+  consentimiento_datos_personales: z.boolean(),
 });
 
 type CreateJovenFormData = z.infer<typeof createJovenSchema>;
 
 export default function NewJovenPage() {
   const router = useRouter();
-  const { updateJoven } = useJovenes();
+  const { createJovenPublic } = useJovenes();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -39,30 +41,26 @@ export default function NewJovenPage() {
   } = useForm<CreateJovenFormData>({
     resolver: zodResolver(createJovenSchema),
     defaultValues: {
+      nombre_completo: '',
+      celular: '',
+      fecha_nacimiento: '',
+      direccion: '',
       bautizado: false,
       sellado: false,
       servidor: false,
       simpatizante: false,
+      consentimiento_datos_personales: false,
     },
   });
 
   const onSubmit = async (data: CreateJovenFormData) => {
     setIsSubmitting(true);
     try {
-      // Crear joven usando POST a /api/joven/registro
-      const response = await fetch('/api/joven/registro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al crear joven');
-      }
-
+      await createJovenPublic.mutateAsync(data);
       toast.success('Joven creado correctamente');
       router.push('/dashboard/jovenes');
     } catch (error: unknown) {
+      console.error('Error creating joven:', error);
       toast.error((error as Error).message || 'Error al crear joven');
     } finally {
       setIsSubmitting(false);
@@ -86,7 +84,7 @@ export default function NewJovenPage() {
 
       {/* Form */}
       <Card className="p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
           {/* Nombre */}
           <div>
             <label className="block text-sm font-medium text-slate-900 mb-2">
@@ -109,7 +107,7 @@ export default function NewJovenPage() {
             </label>
             <Input
               {...register('celular')}
-              placeholder="Ej: 3001234567"
+              placeholder="Ej: 3113678555"
               className={errors.celular ? 'border-red-500' : ''}
             />
             {errors.celular && (
@@ -131,6 +129,23 @@ export default function NewJovenPage() {
               <p className="text-red-500 text-sm mt-1">{errors.fecha_nacimiento.message}</p>
             )}
           </div>
+
+          {/* Dirección */}
+          <div>
+            <label className="block text-sm font-medium text-slate-900 mb-2">
+              Dirección
+            </label>
+            <Input
+              {...register('direccion')}
+              placeholder="Ej: Calle 123 #45-67"
+              className={errors.direccion ? 'border-red-500' : ''}
+            />
+            {errors.direccion && (
+              <p className="text-red-500 text-sm mt-1">{errors.direccion.message}</p>
+            )}
+          </div>
+
+
 
           {/* Estados */}
           <div className="border-t pt-4">
@@ -170,6 +185,15 @@ export default function NewJovenPage() {
                 />
                 <label htmlFor="simpatizante" className="text-sm font-medium cursor-pointer">
                   Simpatizante
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  {...register('consentimiento_datos_personales')}
+                  id="consentimiento_datos_personales"
+                />
+                <label htmlFor="consentimiento_datos_personales" className="text-sm font-medium cursor-pointer">
+                  Consentimiento para el tratamiento de datos personales
                 </label>
               </div>
             </div>

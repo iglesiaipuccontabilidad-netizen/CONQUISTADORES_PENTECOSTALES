@@ -13,35 +13,44 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 // Función para validar celular colombiano
 function validateCelular(celular: string): boolean {
-  return /^\+57\d{10}$/.test(celular)
+  return /^[0-9]{10}$/.test(celular)
 }
 
 // POST /api/joven/registro - Registro público de joven (sin autenticación)
 export async function POST(request: NextRequest) {
   try {
+    console.log('🟡 Iniciando POST /api/joven/registro');
     const body = await request.json()
+    console.log('📝 Body recibido:', body);
 
     // Validaciones básicas
     const { 
       nombre_completo, 
       fecha_nacimiento, 
       celular, 
-      ciudad, 
       direccion,
-      email 
+      bautizado,
+      sellado,
+      servidor,
+      simpatizante,
+      consentimiento_datos_personales
     } = body
 
-    if (!nombre_completo || !fecha_nacimiento || !celular || !ciudad) {
+    if (!nombre_completo || !fecha_nacimiento || !celular) {
+      console.log('❌ Error: Campos obligatorios faltantes');
       return NextResponse.json(
-        { error: 'Campos obligatorios: nombre_completo, fecha_nacimiento, celular, ciudad' },
+        { error: 'Campos obligatorios: nombre_completo, fecha_nacimiento, celular' },
         { status: 400 }
       )
     }
 
+    console.log('✅ Campos obligatorios validados');
+
     // Validar formato de celular
     if (!validateCelular(celular)) {
+      console.log('❌ Error: Celular inválido:', celular);
       return NextResponse.json(
-        { error: 'El celular debe tener el formato +57XXXXXXXXXX' },
+        { error: 'El celular debe tener 10 dígitos (ej: 3113678555)' },
         { status: 400 }
       )
     }
@@ -76,14 +85,13 @@ export async function POST(request: NextRequest) {
       fecha_nacimiento,
       edad,
       celular,
-      ciudad,
-      direccion,
-      email: email || null,
-      estado: 'pendiente', // Los registros públicos quedan pendientes de aprobación
-      bautizado: false,
-      sellado: false,
-      servidor: false,
-      simpatizante: true, // Por defecto son simpatizantes hasta que se confirme lo contrario
+      direccion: direccion || null,
+      estado: 'activo', // Los registros desde el dashboard quedan activos directamente
+      bautizado: Boolean(bautizado),
+      sellado: Boolean(sellado),
+      servidor: Boolean(servidor),
+      simpatizante: Boolean(simpatizante),
+      consentimiento_datos_personales: Boolean(consentimiento_datos_personales),
       created_at: new Date().toISOString(),
     }
 
@@ -107,11 +115,11 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('activity_logs')
         .insert({
-          accion: 'registro_publico',
+          accion: 'creacion_joven',
           tabla: 'jovenes',
           registro_id: joven.id,
-          detalles: `Registro público de ${nombre_completo}`,
-          usuario_id: null, // Es un registro público
+          detalles: `Joven creado: ${nombre_completo}`,
+          usuario_id: null, // TODO: Obtener usuario autenticado
           timestamp: new Date().toISOString(),
         })
     } catch (logError) {
@@ -122,10 +130,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: joven,
-      message: 'Registro exitoso. Tu información será revisada por un administrador.',
+      message: 'Joven creado exitosamente.',
     })
   } catch (error) {
-    console.error('Error en POST /api/joven/registro:', error)
+    console.error('❌ Error en POST /api/joven/registro:', error)
+    console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'No stack trace available')
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

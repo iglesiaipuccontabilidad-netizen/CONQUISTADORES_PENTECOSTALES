@@ -43,7 +43,7 @@ export const useJovenes = () => {
 
   // POST /api/joven/registro - Crear nuevo joven (registro público)
   const createJovenPublic = useMutation({
-    mutationFn: (data: RegistroJovenFormData) =>
+    mutationFn: (data: any) =>
       apiClient.post<ApiResponse<Joven>>('/joven/registro', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['jovenes'] })

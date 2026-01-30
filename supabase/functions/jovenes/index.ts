@@ -39,7 +39,7 @@ function errorResponse(message: string, status = 400) {
 
 // Validaciones
 function validateCelular(celular: string): boolean {
-  return /^\+57\d{10}$/.test(celular)
+  return /^\d{10}$/.test(celular)
 }
 
 // ============================================
@@ -258,7 +258,7 @@ Deno.serve(async (req: Request) => {
       }
 
       if (!celular || !validateCelular(celular)) {
-        return errorResponse('Celular inválido (formato: +57XXXXXXXXXX)', 400)
+        return errorResponse('Celular inválido (formato: 10 dígitos, ej: 3001234567)', 400)
       }
 
       // Validar edad
