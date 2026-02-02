@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🟡 Iniciando POST /api/joven/registro');
     const body = await request.json()
-    console.log('📝 Body recibido:', body);
+    console.log('📝 Body recibido:', JSON.stringify(body, null, 2));
 
     // Validaciones básicas
     const { 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!nombre_completo || !fecha_nacimiento || !celular) {
       console.log('❌ Error: Campos obligatorios faltantes');
       return NextResponse.json(
-        { error: 'Campos obligatorios: nombre_completo, fecha_nacimiento, celular' },
+        { status: 'error', error: 'Campos obligatorios: nombre_completo, fecha_nacimiento, celular' },
         { status: 400 }
       )
     }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (!validateCelular(celular)) {
       console.log('❌ Error: Celular inválido:', celular);
       return NextResponse.json(
-        { error: 'El celular debe tener 10 dígitos (ej: 3113678555)' },
+        { status: 'error', error: 'El celular debe tener 10 dígitos (ej: 3113678555)' },
         { status: 400 }
       )
     }
@@ -65,17 +65,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si ya existe un joven con el mismo nombre completo
-    const { data: existingJovenByName } = await supabase
+    console.log('🔍 Verificando duplicado por nombre:', nombre_completo)
+    const { data: existingJovenByName, error: nameCheckError } = await supabase
       .from('jovenes')
       .select('id, nombre_completo')
       .eq('nombre_completo', nombre_completo)
       .eq('estado', 'activo')
       .single()
 
+    if (nameCheckError && nameCheckError.code !== 'PGRST116') {
+      console.log('❌ Error al verificar nombre duplicado:', nameCheckError)
+      return NextResponse.json(
+        { status: 'error', error: 'Error interno del servidor' },
+        { status: 500 }
+      )
+    }
+
     if (existingJovenByName) {
+      console.log('❌ Nombre duplicado encontrado:', existingJovenByName)
       return NextResponse.json(
         { 
-          success: false,
+          status: 'error',
           error: `Ya existe un joven registrado con el nombre "${nombre_completo}". Por favor, verifica la información o usa un nombre diferente si es una persona distinta.` 
         },
         { status: 400 }
@@ -83,17 +93,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si ya existe un joven con el mismo celular
-    const { data: existingJovenByPhone } = await supabase
+    console.log('📱 Verificando duplicado por celular:', celular)
+    const { data: existingJovenByPhone, error: phoneCheckError } = await supabase
       .from('jovenes')
       .select('id, nombre_completo')
       .eq('celular', celular)
       .eq('estado', 'activo')
       .single()
 
+    if (phoneCheckError && phoneCheckError.code !== 'PGRST116') {
+      console.log('❌ Error al verificar celular duplicado:', phoneCheckError)
+      return NextResponse.json(
+        { status: 'error', error: 'Error interno del servidor' },
+        { status: 500 }
+      )
+    }
+
     if (existingJovenByPhone) {
+      console.log('❌ Celular duplicado encontrado:', existingJovenByPhone)
       return NextResponse.json(
         { 
-          success: false,
+          status: 'error',
           error: `Ya existe un joven registrado con el número de celular ${celular} (${existingJovenByPhone.nombre_completo}). Por favor, verifica la información.` 
         },
         { status: 400 }
@@ -117,6 +137,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear joven
+    console.log('💾 Insertando joven con datos:', JSON.stringify(jovenData, null, 2))
     const { data: joven, error } = await supabase
       .from('jovenes')
       .insert(jovenData)
@@ -124,11 +145,14 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error al crear joven:', error)
+      console.error('❌ Error al crear joven:', error)
+      console.error('❌ Código de error:', error.code)
+      console.error('❌ Mensaje:', error.message)
+      console.error('❌ Detalles:', error.details)
       return NextResponse.json(
         { 
-          success: false,
-          error: 'Error al procesar el registro. Por favor, inténtalo de nuevo.' 
+          status: 'error',
+          error: `Error al procesar el registro: ${error.message}` 
         },
         { status: 500 }
       )
@@ -152,15 +176,15 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      data: joven,
+      status: 'success',
+      joven: joven,
       message: 'Joven creado exitosamente.',
     })
   } catch (error) {
     console.error('❌ Error en POST /api/joven/registro:', error)
     console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'No stack trace available')
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { status: 'error', error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

@@ -20,7 +20,7 @@ apiClient.interceptors.request.use(async (config) => {
   console.log('API Client: Adding token to request', config.url)
 
   // For public registration endpoint, use anon key instead of user JWT
-  if (config.url?.includes('/auth/joven/registro')) {
+  if (config.url?.includes('/joven/registro')) {
     console.log('API Client: Using anon key for public registration endpoint')
     config.headers.Authorization = `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
     return config

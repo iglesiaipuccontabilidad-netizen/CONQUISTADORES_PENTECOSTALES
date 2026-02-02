@@ -129,12 +129,21 @@ export default function RegistroPage() {
       hasSubmittedRef.current = true
       const celularFormateado = validatorsColombia.formatCelular(data.celular)
 
+      // Map form data to API expected format
+      const apiData = {
+        nombre_completo: data.nombre_completo,
+        fecha_nacimiento: data.fecha_nacimiento,
+        celular: celularFormateado,
+        bautizado: data.estados.includes('Bautizado'),
+        sellado: data.estados.includes('Sellado'),
+        servidor: data.estados.includes('Servidor'),
+        simpatizante: data.estados.includes('Simpatizante'),
+        consentimiento_datos_personales: data.consentimientos.datos_personales,
+      }
+
       const response = await apiClient.post<RegistroResponse>(
-        '/auth/joven/registro',
-        {
-          ...data,
-          celular: celularFormateado,
-        }
+        '/joven/registro',
+        apiData
       )
 
       console.log('API response received:', response.data)
@@ -155,14 +164,22 @@ export default function RegistroPage() {
       }
     } catch (error: unknown) {
       console.log('API call failed:', error)
-      const axiosError = error as AxiosError
+      const axiosError = error as AxiosError<RegistroResponse>
+      
+      let errorMessage = 'Ocurrió un error inesperado. Inténtalo de nuevo.'
+      
+      if (axiosError?.response?.data?.error) {
+        errorMessage = axiosError.response.data.error
+      }
+      
       console.log('Error details:', {
         message: axiosError?.message,
         response: axiosError?.response?.data,
         status: axiosError?.response?.status,
         statusText: axiosError?.response?.statusText
       })
-      toast.error('Ocurrió un error inesperado. Inténtalo de nuevo.')
+      
+      toast.error(errorMessage)
       setIsSubmitting(false) // Allow retry on error
       hasSubmittedRef.current = false // Allow retry on error
     }
