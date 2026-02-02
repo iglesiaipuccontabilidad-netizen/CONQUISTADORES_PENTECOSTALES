@@ -9,6 +9,7 @@ export interface User {
   email: string
   telefono: string
   estado: 'activo' | 'inactivo'
+  rol?: 'admin' | 'lider' | 'usuario' | 'visitante'
   ultima_sesion: string | null
   created_at: string
   updated_at: string
@@ -57,6 +58,7 @@ export interface Grupo {
   lider_id: string
   lider?: User
   estado: 'activo' | 'inactivo'
+  integrantes_count?: number
   created_at: string
   updated_at: string
   created_by?: string

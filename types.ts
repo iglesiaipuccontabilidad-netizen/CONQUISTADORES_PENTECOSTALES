@@ -37,7 +37,7 @@ export interface User {
   nombre_completo: string;
   telefono: string;
   estado: 'activo' | 'inactivo';
-  rol: 'admin' | 'lider' | 'usuario' | 'visitante';
+  rol?: 'admin' | 'lider' | 'usuario' | 'visitante';
   ultima_sesion: string | null;
   created_at: string;
   updated_at: string;

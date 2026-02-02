@@ -18,6 +18,8 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useLideres } from '@/hooks/useLideres';
+import { useGrupos } from '@/hooks/useGrupos';
 
 const createGrupoSchema = z.object({
   nombre: z.string().min(3, 'Mínimo 3 caracteres'),
@@ -27,16 +29,11 @@ const createGrupoSchema = z.object({
 
 type CreateGrupoFormData = z.infer<typeof createGrupoSchema>;
 
-// Mock users - reemplazar con hook real
-const mockUsers = [
-  { id: 'user1', nombre_completo: 'Juan Pérez' },
-  { id: 'user2', nombre_completo: 'María García' },
-  { id: 'user3', nombre_completo: 'Carlos Rodríguez' },
-];
-
 export default function NewGrupoPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: lideres, isLoading: isLoadingLideres } = useLideres();
+  const { createGrupo } = useGrupos();
 
   const {
     register,
@@ -53,8 +50,13 @@ export default function NewGrupoPage() {
   const onSubmit = async (data: CreateGrupoFormData) => {
     setIsSubmitting(true);
     try {
-      // TODO: Implementar creación real
-      console.log('Crear grupo:', data);
+      const grupoData = {
+        nombre: data.nombre,
+        lider_id: data.lider_id,
+        estado: 'activo' as const,
+        ...(data.descripcion && { descripcion: data.descripcion }),
+      };
+      await createGrupo.mutateAsync(grupoData);
       toast.success('Grupo creado correctamente');
       router.push('/dashboard/grupos');
     } catch (error: unknown) {
@@ -119,14 +121,15 @@ export default function NewGrupoPage() {
             <Select
               value={selectedLiderId}
               onValueChange={(value) => setValue('lider_id', value)}
+              disabled={isLoadingLideres}
             >
               <SelectTrigger className={errors.lider_id ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Seleccione un líder" />
+                <SelectValue placeholder={isLoadingLideres ? "Cargando líderes..." : "Seleccione un líder"} />
               </SelectTrigger>
               <SelectContent>
-                {mockUsers.map((user) => (
+                {lideres?.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.nombre_completo}
+                    {user.nombre_completo} ({user.rol})
                   </SelectItem>
                 ))}
               </SelectContent>

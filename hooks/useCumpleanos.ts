@@ -50,10 +50,11 @@ export interface UseCumpleanosReturn {
 
 const calculateAge = (birthDate: string): number => {
   const today = new Date()
-  const birth = new Date(birthDate)
-  let age = today.getFullYear() - birth.getFullYear()
-  const monthDiff = today.getMonth() - birth.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
+  const birth = new Date(birthDate + 'T00:00:00Z')
+  let age = todayUTC.getUTCFullYear() - birth.getUTCFullYear()
+  const monthDiff = todayUTC.getUTCMonth() - birth.getUTCMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && todayUTC.getUTCDate() < birth.getUTCDate())) {
     age--
   }
   return age
@@ -61,13 +62,14 @@ const calculateAge = (birthDate: string): number => {
 
 const getJovenesParaHoy = (jovenes: Joven[]): CumpleanosDetalle[] => {
   const today = new Date()
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
   return jovenes
     .filter((joven) => {
       if (!joven.fecha_nacimiento) return false
-      const birth = new Date(joven.fecha_nacimiento)
+      const birth = new Date(joven.fecha_nacimiento + 'T00:00:00Z')
       return (
-        birth.getMonth() === today.getMonth() &&
-        birth.getDate() === today.getDate()
+        birth.getUTCMonth() === todayUTC.getUTCMonth() &&
+        birth.getUTCDate() === todayUTC.getUTCDate()
       )
     })
     .map((joven) => ({
@@ -81,19 +83,19 @@ const getJovenesParaHoy = (jovenes: Joven[]): CumpleanosDetalle[] => {
 
 const getJovenesParaLaSemana = (jovenes: Joven[]): CumpleanosPorDia[] => {
   const today = new Date()
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
   const diasDelaSemana = []
 
   for (let i = 1; i <= 7; i++) {
-    const fecha = new Date(today)
-    fecha.setDate(today.getDate() + i)
+    const fechaUTC = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), todayUTC.getUTCDate() + i))
 
     const jovenesdel = jovenes
       .filter((joven) => {
         if (!joven.fecha_nacimiento) return false
-        const birth = new Date(joven.fecha_nacimiento)
+        const birth = new Date(joven.fecha_nacimiento + 'T00:00:00Z')
         return (
-          birth.getMonth() === fecha.getMonth() &&
-          birth.getDate() === fecha.getDate()
+          birth.getUTCMonth() === fechaUTC.getUTCMonth() &&
+          birth.getUTCDate() === fechaUTC.getUTCDate()
         )
       })
       .map((joven) => ({
@@ -114,12 +116,12 @@ const getJovenesParaLaSemana = (jovenes: Joven[]): CumpleanosPorDia[] => {
         'viernes',
         'sábado',
       ]
-      const nombreDia = nombresDias[fecha.getDay()]
+      const nombreDia = nombresDias[fechaUTC.getUTCDay()]
       
-      // Formato local YYYY-MM-DD
-      const year = fecha.getFullYear()
-      const month = String(fecha.getMonth() + 1).padStart(2, '0')
-      const day = String(fecha.getDate()).padStart(2, '0')
+      // Formato UTC YYYY-MM-DD
+      const year = fechaUTC.getUTCFullYear()
+      const month = String(fechaUTC.getUTCMonth() + 1).padStart(2, '0')
+      const day = String(fechaUTC.getUTCDate()).padStart(2, '0')
       const fechaFormato = `${year}-${month}-${day}`
 
       diasDelaSemana.push({
@@ -135,12 +137,13 @@ const getJovenesParaLaSemana = (jovenes: Joven[]): CumpleanosPorDia[] => {
 
 const getEstadisticasMes = (jovenes: Joven[]): CumpleanosStats => {
   const today = new Date()
-  const mesActual = today.getMonth()
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
+  const mesActual = todayUTC.getUTCMonth()
 
   const cumpleanerosMes = jovenes.filter((joven) => {
     if (!joven.fecha_nacimiento) return false
-    const birth = new Date(joven.fecha_nacimiento)
-    return birth.getMonth() === mesActual
+    const birth = new Date(joven.fecha_nacimiento + 'T00:00:00Z')
+    return birth.getUTCMonth() === mesActual
   })
 
   return {
@@ -152,13 +155,14 @@ const getEstadisticasMes = (jovenes: Joven[]): CumpleanosStats => {
 
 const getJovenesPorMes = (jovenes: Joven[]): CumpleanosDetalle[] => {
   const today = new Date()
-  const mesActual = today.getMonth()
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
+  const mesActual = todayUTC.getUTCMonth()
 
   return jovenes
     .filter((joven) => {
       if (!joven.fecha_nacimiento) return false
-      const birth = new Date(joven.fecha_nacimiento)
-      return birth.getMonth() === mesActual
+      const birth = new Date(joven.fecha_nacimiento + 'T00:00:00Z')
+      return birth.getUTCMonth() === mesActual
     })
     .map((joven) => ({
       id: joven.id,
@@ -168,32 +172,33 @@ const getJovenesPorMes = (jovenes: Joven[]): CumpleanosDetalle[] => {
       fecha_nacimiento: joven.fecha_nacimiento,
     }))
     .sort((a, b) => {
-      const dateA = new Date(a.fecha_nacimiento)
-      const dateB = new Date(b.fecha_nacimiento)
-      return dateA.getDate() - dateB.getDate()
+      const dateA = new Date(a.fecha_nacimiento + 'T00:00:00Z')
+      const dateB = new Date(b.fecha_nacimiento + 'T00:00:00Z')
+      return dateA.getUTCDate() - dateB.getUTCDate()
     })
 }
 
 const getProximos30Dias = (jovenes: Joven[]): CumpleanosProximos30[] => {
   const today = new Date()
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
   const diasProximos: CumpleanosProximos30[] = []
 
   const jovenasConFecha = jovenes
     .filter((joven) => joven.fecha_nacimiento)
     .map((joven) => {
-      const birth = new Date(joven.fecha_nacimiento)
-      let proxCumple = new Date(today.getFullYear(), birth.getMonth(), birth.getDate())
+      const birth = new Date(joven.fecha_nacimiento + 'T00:00:00Z')
+      let proxCumple = new Date(Date.UTC(todayUTC.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()))
 
-      if (proxCumple < today) {
-        proxCumple = new Date(
-          today.getFullYear() + 1,
-          birth.getMonth(),
-          birth.getDate()
-        )
+      if (proxCumple < todayUTC) {
+        proxCumple = new Date(Date.UTC(
+          todayUTC.getUTCFullYear() + 1,
+          birth.getUTCMonth(),
+          birth.getUTCDate()
+        ))
       }
 
       const diasRestantes = Math.floor(
-        (proxCumple.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        (proxCumple.getTime() - todayUTC.getTime()) / (1000 * 60 * 60 * 24)
       )
 
       return {

@@ -49,7 +49,10 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('grupos')
-      .select('*, lider:users!grupos_lider_id_fkey(id, nombre_completo, email)')
+      .select(`
+        *,
+        lider:users!grupos_lider_id_fkey(id, nombre_completo, email)
+      `)
       .eq('estado', 'activo')
       .order('nombre')
 
@@ -68,10 +71,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Agregar conteo dummy por ahora
+    const gruposConCount = (grupos || []).map(grupo => ({
+      ...grupo,
+      integrantes_count: 0 // TODO: implementar conteo real
+    }))
+
     return NextResponse.json({
       success: true,
-      data: grupos || [],
-      count: grupos?.length || 0,
+      data: gruposConCount,
+      count: gruposConCount.length,
     })
   } catch (error) {
     console.error('Error en GET /api/grupos:', error)

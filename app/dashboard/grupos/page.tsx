@@ -38,9 +38,10 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Grupo } from '@/types';
+import { useGrupos } from '@/hooks/useGrupos';
 
 // Extended Grupo type for the UI
-interface GrupoUI extends Omit<Grupo, 'lider'> {
+interface GrupoUI extends Grupo {
   lider_nombre?: string;
   integrantes_count?: number;
   color?: string;
@@ -75,19 +76,36 @@ const mockGrupos: GrupoUI[] = [
 ];
 
 export default function GruposPage() {
+  const { grupos, isLoading, error } = useGrupos();
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedGrupo, setSelectedGrupo] = useState<GrupoUI | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Mock loading state
-  const isLoading = false;
+  // Transformar grupos para incluir lider_nombre y contar integrantes
+  const gruposUI: GrupoUI[] = grupos?.map((grupo) => ({
+    ...grupo,
+    lider_nombre: grupo.lider?.nombre_completo || 'Sin líder asignado',
+    integrantes_count: grupo.integrantes_count || 0,
+    color: 'blue' // TODO: asignar colores dinámicamente
+  })) || [];
 
-  const filteredGrupos = mockGrupos.filter((grupo) =>
+  const filteredGrupos = gruposUI.filter((grupo) =>
     grupo.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     grupo.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     grupo.lider_nombre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (error) {
+    return (
+      <div className="space-y-8 pb-12">
+        <div className="text-center p-24">
+          <h3 className="text-2xl font-black text-red-600 tracking-tight">Error al cargar grupos</h3>
+          <p className="text-slate-500 mt-2 font-medium">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleDeleteClick = (grupo: GrupoUI) => {
     setSelectedGrupo(grupo);
