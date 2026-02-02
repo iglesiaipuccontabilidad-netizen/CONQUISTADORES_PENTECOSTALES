@@ -61,6 +61,41 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Verificar si es una búsqueda por nombre (para verificar duplicados)
+    const { searchParams } = new URL(request.url)
+    const nombreBusqueda = searchParams.get('nombre')
+    
+    if (nombreBusqueda) {
+      // Búsqueda específica por nombre (case insensitive)
+      const { data: jovenEncontrado, error: searchError } = await supabase
+        .from('jovenes')
+        .select('id, nombre_completo')
+        .ilike('nombre_completo', nombreBusqueda)
+        .eq('estado', 'activo')
+        .limit(1)
+        
+      if (searchError) {
+        console.error('Error al buscar joven por nombre:', searchError)
+        return NextResponse.json({
+          success: true,
+          data: [],
+        }, {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+          }
+        })
+      }
+      
+      return NextResponse.json({
+        success: true,
+        data: jovenEncontrado || [],
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        }
+      })
+    }
+
     let query = supabase
       .from('jovenes')
       .select('id, nombre_completo, fecha_nacimiento, celular, grupo_id, estado, bautizado, sellado, servidor, simpatizante, created_at')

@@ -8,6 +8,7 @@ import { Calendar, Gift, Send, Cake, User, Phone, Search, PartyPopper, Bell, Clo
 import { useCumpleanos, type CumpleanosDetalle } from '@/hooks/useCumpleanos';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import { Joven } from '@/types';
 
 export default function CumpleanosPage() {
@@ -107,10 +108,10 @@ export default function CumpleanosPage() {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -10 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
           className="space-y-6"
         >
           {activeTab === 'hoy' && (
@@ -145,7 +146,7 @@ export default function CumpleanosPage() {
                     <h3 className="text-[10px] md:text-sm font-black uppercase tracking-widest text-slate-500">{dia.dia}</h3>
                     <span className="text-[10px] md:text-xs font-bold text-slate-300 ml-auto">{dia.fecha}</span>
                   </div>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {dia.jovenes.map((joven) => (
                       <BirthdayCard
                         key={joven.id}
@@ -183,11 +184,17 @@ export default function CumpleanosPage() {
                     jovenesPorMes.map((joven, index) => (
                       <div key={joven.id} className="py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-slate-50 transition-colors group gap-3">
                         <div className="flex items-center gap-3 md:gap-4">
-                          <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg md:rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-md transition-all">
-                            <User size={20} strokeWidth={1.5} />
-                          </div>
+                          <Link href={`/dashboard/jovenes/${joven.id}`} className="flex-shrink-0">
+                            <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg md:rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                              <User size={20} strokeWidth={1.5} />
+                            </div>
+                          </Link>
                           <div>
-                            <p className="text-sm md:text-base font-bold text-slate-900">{joven.nombre_completo}</p>
+                            <Link href={`/dashboard/jovenes/${joven.id}`}>
+                              <p className="text-sm md:text-base font-bold text-slate-900 hover:text-[#0066B3] hover:underline transition-colors cursor-pointer">
+                                {joven.nombre_completo}
+                              </p>
+                            </Link>
                             <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1">
                               <span className="text-[10px] md:text-xs font-bold text-slate-400 flex items-center gap-1">
                                 <Calendar size={12} className="text-[#0066B3]" />
@@ -235,11 +242,17 @@ export default function CumpleanosPage() {
                 {proximos30.map((joven) => (
                   <div key={joven.id} className="p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-slate-50 transition-colors group gap-3 md:gap-4">
                     <div className="flex items-center gap-3 md:gap-4">
-                      <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg md:rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-md transition-all">
-                        <User size={20} strokeWidth={1.5} />
-                      </div>
+                      <Link href={`/dashboard/jovenes/${joven.id}`} className="flex-shrink-0">
+                        <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg md:rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-white hover:shadow-md transition-all cursor-pointer">
+                          <User size={20} strokeWidth={1.5} />
+                        </div>
+                      </Link>
                       <div>
-                        <p className="text-sm md:text-base font-bold text-slate-900">{joven.nombre_completo}</p>
+                        <Link href={`/dashboard/jovenes/${joven.id}`}>
+                          <p className="text-sm md:text-base font-bold text-slate-900 hover:text-[#0066B3] hover:underline transition-colors cursor-pointer">
+                            {joven.nombre_completo}
+                          </p>
+                        </Link>
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1">
                           <span className="text-[10px] md:text-xs font-bold text-slate-400 flex items-center gap-1">
                             <Calendar size={12} className="text-[#0066B3]" />
@@ -275,9 +288,13 @@ interface BirthdayCardProps {
 function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps) {
   const isToday = variant === 'today';
 
+  if (!joven?.nombre_completo) return null;
+
   return (
     <motion.div
-      variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
       whileHover={{ y: -5 }}
       className="group"
     >
@@ -292,9 +309,9 @@ function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps)
 
         <div className="flex flex-col gap-4 md:gap-5 items-center text-center">
           {/* Avatar Area */}
-          <div className="relative">
+          <Link href={`/dashboard/jovenes/${joven.id}`} className="relative group/avatar cursor-pointer">
             <div className={cn(
-              "h-20 w-20 md:h-24 md:w-24 rounded-2xl md:rounded-3xl p-0.5 md:p-1 shadow-xl md:shadow-2xl transition-transform duration-500 group-hover:rotate-6",
+              "h-20 w-20 md:h-24 md:w-24 rounded-2xl md:rounded-3xl p-0.5 md:p-1 shadow-xl md:shadow-2xl transition-transform duration-500 group-hover/avatar:scale-105 group-hover:rotate-6",
               isToday ? "bg-gradient-to-br from-[#F5A623] via-[#0066B3] to-[#00338D]" : "bg-slate-200"
             )}>
               <div className="h-full w-full rounded-[1rem] md:rounded-[1.4rem] bg-white flex items-center justify-center text-xl md:text-2xl font-black text-[#1A1A1A] border border-slate-100">
@@ -306,10 +323,14 @@ function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps)
                 <PartyPopper className="w-4 h-4 md:w-5 md:h-5" />
               </div>
             )}
-          </div>
+          </Link>
 
           <div>
-            <h3 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight line-clamp-1">{joven.nombre_completo}</h3>
+            <Link href={`/dashboard/jovenes/${joven.id}`}>
+              <h3 className="text-lg md:text-xl font-black text-[#1A1A1A] tracking-tight line-clamp-1 hover:text-[#0066B3] hover:underline transition-colors cursor-pointer">
+                {joven.nombre_completo}
+              </h3>
+            </Link>
             <div className="flex flex-col items-center gap-1 mt-1.5 md:mt-2">
               <span className={cn(
                 "text-xs md:text-sm font-bold",

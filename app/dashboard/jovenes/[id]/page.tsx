@@ -30,7 +30,7 @@ import {
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Joven } from '@/types/index';
 
@@ -81,6 +81,7 @@ export default function JovenDetailPage() {
         data: {
           nombre_completo: formData.nombre_completo,
           celular: formData.celular,
+          fecha_nacimiento: formData.fecha_nacimiento,
           bautizado: formData.bautizado,
           sellado: formData.sellado,
           servidor: formData.servidor,
@@ -280,8 +281,11 @@ export default function JovenDetailPage() {
                     <DetailItem
                       icon={Calendar}
                       label="Fecha de Nacimiento"
-                      value={formData.fecha_nacimiento ? format(new Date(formData.fecha_nacimiento), 'dd MMMM, yyyy', { locale: es }) : 'No registra'}
-                      disabled
+                      value={formData.fecha_nacimiento ? (isEditing ? formData.fecha_nacimiento : format(parseISO(formData.fecha_nacimiento), 'dd MMMM, yyyy', { locale: es })) : (isEditing ? '' : 'No registra')}
+                      isEditing={isEditing}
+                      name="fecha_nacimiento"
+                      onChange={handleInputChange}
+                      inputType="date"
                     />
                   </div>
                 </div>
@@ -406,11 +410,11 @@ export default function JovenDetailPage() {
                 <div className="pt-6 border-t border-slate-100">
                   <div className="flex items-center gap-3 text-slate-400 text-xs font-medium">
                     <Clock size={14} />
-                    <span>Registrado el {formData.created_at ? format(new Date(formData.created_at), 'PPP', { locale: es }) : '—'}</span>
+                    <span>Registrado el {formData.created_at ? format(parseISO(formData.created_at), 'PPP', { locale: es }) : '—'}</span>
                   </div>
                   <div className="flex items-center gap-3 text-slate-400 text-xs font-medium mt-2">
                     <Activity size={14} />
-                    <span>Última actualización {formData.updated_at ? format(new Date(formData.updated_at), 'PPP', { locale: es }) : '—'}</span>
+                    <span>Última actualización {formData.updated_at ? format(parseISO(formData.updated_at), 'PPP', { locale: es }) : '—'}</span>
                   </div>
                 </div>
               </div>
@@ -430,9 +434,10 @@ interface DetailItemProps {
   name?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
+  inputType?: string;
 }
 
-function DetailItem({ icon: Icon, label, value, isEditing, name, onChange, disabled }: DetailItemProps) {
+function DetailItem({ icon: Icon, label, value, isEditing, name, onChange, disabled, inputType = 'text' }: DetailItemProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -441,6 +446,7 @@ function DetailItem({ icon: Icon, label, value, isEditing, name, onChange, disab
       </div>
       {isEditing && !disabled ? (
         <Input
+          type={inputType}
           name={name}
           value={value}
           onChange={onChange}

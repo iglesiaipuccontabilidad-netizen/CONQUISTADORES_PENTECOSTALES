@@ -83,9 +83,9 @@ const getJovenesParaLaSemana = (jovenes: Joven[]): CumpleanosPorDia[] => {
   const today = new Date()
   const diasDelaSemana = []
 
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 7; i++) {
     const fecha = new Date(today)
-    fecha.setDate(fecha.getDate() + i)
+    fecha.setDate(today.getDate() + i)
 
     const jovenesdel = jovenes
       .filter((joven) => {
@@ -115,7 +115,12 @@ const getJovenesParaLaSemana = (jovenes: Joven[]): CumpleanosPorDia[] => {
         'sábado',
       ]
       const nombreDia = nombresDias[fecha.getDay()]
-      const fechaFormato = fecha.toISOString().split('T')[0]
+      
+      // Formato local YYYY-MM-DD
+      const year = fecha.getFullYear()
+      const month = String(fecha.getMonth() + 1).padStart(2, '0')
+      const day = String(fecha.getDate()).padStart(2, '0')
+      const fechaFormato = `${year}-${month}-${day}`
 
       diasDelaSemana.push({
         dia: nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1),

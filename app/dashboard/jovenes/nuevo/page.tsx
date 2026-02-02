@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useJovenes } from '@/hooks/useJovenes';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,8 +30,10 @@ type CreateJovenFormData = z.infer<typeof createJovenSchema>;
 
 export default function NewJovenPage() {
   const router = useRouter();
-  const { createJovenPublic } = useJovenes();
+  const { createJovenPublic, checkNombreDuplicado } = useJovenes();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nombreDuplicado, setNombreDuplicado] = useState(false);
+  const [verificandoNombre, setVerificandoNombre] = useState(false);
 
   const {
     register,
@@ -53,6 +55,31 @@ export default function NewJovenPage() {
     },
   });
 
+  const nombreCompleto = watch('nombre_completo');
+
+  // Verificar nombres duplicados en tiempo real
+  useEffect(() => {
+    const verificarNombre = async () => {
+      if (nombreCompleto && nombreCompleto.length >= 3) {
+        setVerificandoNombre(true);
+        try {
+          const isDuplicate = await checkNombreDuplicado(nombreCompleto);
+          setNombreDuplicado(isDuplicate);
+        } catch (error) {
+          console.error('Error checking name:', error);
+        } finally {
+          setVerificandoNombre(false);
+        }
+      } else {
+        setNombreDuplicado(false);
+        setVerificandoNombre(false);
+      }
+    };
+
+    const timeoutId = setTimeout(verificarNombre, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [nombreCompleto, checkNombreDuplicado]);
+
   const onSubmit = async (data: CreateJovenFormData) => {
     setIsSubmitting(true);
     try {
@@ -61,7 +88,22 @@ export default function NewJovenPage() {
       router.push('/dashboard/jovenes');
     } catch (error: unknown) {
       console.error('Error creating joven:', error);
-      toast.error((error as Error).message || 'Error al crear joven');
+      
+      // Extraer el mensaje de error del response
+      let errorMessage = 'Error al crear joven';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as any).response;
+        if (response?.data?.error) {
+          errorMessage = response.data.error;
+        } else if (response?.statusText) {
+          errorMessage = response.statusText;
+        }
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as Error).message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -90,13 +132,31 @@ export default function NewJovenPage() {
             <label className="block text-sm font-medium text-slate-900 mb-2">
               Nombre Completo *
             </label>
-            <Input
-              {...register('nombre_completo')}
-              placeholder="Ej: Juan Pérez"
-              className={errors.nombre_completo ? 'border-red-500' : ''}
-            />
+            <div className="relative">
+              <Input
+                {...register('nombre_completo')}
+                placeholder="Ej: Juan Pérez"
+                className={`${
+                  errors.nombre_completo ? 'border-red-500' : 
+                  nombreDuplicado ? 'border-amber-500' : ''
+                }`}
+              />
+              {verificandoNombre && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-600"></div>
+                </div>
+              )}
+            </div>
             {errors.nombre_completo && (
               <p className="text-red-500 text-sm mt-1">{errors.nombre_completo.message}</p>
+            )}
+            {nombreDuplicado && !errors.nombre_completo && (
+              <div className="flex items-center gap-2 mt-1 text-amber-600">
+                <AlertTriangle size={16} />
+                <p className="text-sm">
+                  Ya existe un joven con este nombre. ¿Estás seguro de que es una persona diferente?
+                </p>
+              </div>
             )}
           </div>
 
@@ -204,8 +264,12 @@ export default function NewJovenPage() {
             <Link href="/dashboard/jovenes">
               <Button variant="outline">Cancelar</Button>
             </Link>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creando...' : 'Crear Joven'}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className={nombreDuplicado ? 'bg-amber-600 hover:bg-amber-700' : ''}
+            >
+              {isSubmitting ? 'Creando...' : nombreDuplicado ? 'Crear de Todos Modos' : 'Crear Joven'}
             </Button>
           </div>
         </form>

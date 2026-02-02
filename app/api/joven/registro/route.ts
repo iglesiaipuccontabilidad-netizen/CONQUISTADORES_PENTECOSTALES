@@ -64,17 +64,38 @@ export async function POST(request: NextRequest) {
       edad--
     }
 
-    // Verificar si ya existe un joven con el mismo celular
-    const { data: existingJoven } = await supabase
+    // Verificar si ya existe un joven con el mismo nombre completo
+    const { data: existingJovenByName } = await supabase
       .from('jovenes')
-      .select('id')
+      .select('id, nombre_completo')
+      .eq('nombre_completo', nombre_completo)
+      .eq('estado', 'activo')
+      .single()
+
+    if (existingJovenByName) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: `Ya existe un joven registrado con el nombre "${nombre_completo}". Por favor, verifica la información o usa un nombre diferente si es una persona distinta.` 
+        },
+        { status: 400 }
+      )
+    }
+
+    // Verificar si ya existe un joven con el mismo celular
+    const { data: existingJovenByPhone } = await supabase
+      .from('jovenes')
+      .select('id, nombre_completo')
       .eq('celular', celular)
       .eq('estado', 'activo')
       .single()
 
-    if (existingJoven) {
+    if (existingJovenByPhone) {
       return NextResponse.json(
-        { error: 'Ya existe un joven registrado con este número de celular' },
+        { 
+          success: false,
+          error: `Ya existe un joven registrado con el número de celular ${celular} (${existingJovenByPhone.nombre_completo}). Por favor, verifica la información.` 
+        },
         { status: 400 }
       )
     }
@@ -105,7 +126,10 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error al crear joven:', error)
       return NextResponse.json(
-        { error: 'Error al procesar el registro' },
+        { 
+          success: false,
+          error: 'Error al procesar el registro. Por favor, inténtalo de nuevo.' 
+        },
         { status: 500 }
       )
     }

@@ -69,6 +69,17 @@ export const useJovenes = () => {
     },
   })
 
+  // Función para verificar si existe un nombre duplicado
+  const checkNombreDuplicado = async (nombre: string): Promise<boolean> => {
+    try {
+      const response = await apiClient.get<ApiResponse<any>>(`/jovenes?nombre=${encodeURIComponent(nombre)}`)
+      return response.data?.data?.length > 0 || false
+    } catch (error) {
+      console.error('Error checking duplicate name:', error)
+      return false
+    }
+  }
+
   return {
     // Queries
     jovenes,
@@ -80,5 +91,8 @@ export const useJovenes = () => {
     createJovenPublic,
     updateJoven,
     deleteJoven,
+
+    // Utilities
+    checkNombreDuplicado,
   }
 }
