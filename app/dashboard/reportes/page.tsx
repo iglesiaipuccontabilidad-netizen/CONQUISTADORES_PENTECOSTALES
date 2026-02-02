@@ -48,6 +48,8 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useCumpleanos } from '@/hooks/useCumpleanos';
+import { useJovenes } from '@/hooks/useJovenes';
+import { useGrupos } from '@/hooks/useGrupos';
 
 // Mock data
 const mockReportes = {
@@ -74,7 +76,84 @@ export default function ReportesPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [mesCumpleanos, setMesCumpleanos] = useState(new Date().getMonth() + 1);
 
+  // Filtros para el reporte general
+  const [filtrosEstados, setFiltrosEstados] = useState({
+    bautizado: false,
+    sellado: false,
+    servidor: false,
+    simpatizante: false
+  });
+
   const { cumpleanosHoy, estadisticasMes, proximos30, isLoading: loadingCumpleanos } = useCumpleanos();
+  const { jovenes, isLoading: loadingJovenes } = useJovenes();
+  const { grupos, isLoading: loadingGrupos } = useGrupos();
+
+  // Función para filtrar jóvenes según criterios seleccionados
+  const filtrarJovenes = useMemo(() => {
+    if (!jovenes) return [];
+    
+    let filtrados = jovenes.filter(j => j.estado === 'activo');
+    
+    // Aplicar filtros de estado espiritual
+    const filtrosActivos = Object.entries(filtrosEstados).filter(([_, activo]) => activo);
+    
+    if (filtrosActivos.length > 0) {
+      filtrados = filtrados.filter(joven => {
+        return filtrosActivos.some(([estado, _]) => joven[estado as keyof typeof joven] === true);
+      });
+    }
+    
+    return filtrados;
+  }, [jovenes, filtrosEstados]);
+
+  // Calcular estadísticas reales con filtros aplicados
+  const estadisticasReales = useMemo(() => {
+    if (!filtrarJovenes.length) return null;
+    
+    return {
+      totalJovenes: filtrarJovenes.length,
+      bautizados: filtrarJovenes.filter(j => j.bautizado).length,
+      sellados: filtrarJovenes.filter(j => j.sellado).length,
+      servidores: filtrarJovenes.filter(j => j.servidor).length,
+      simpatizantes: filtrarJovenes.filter(j => j.simpatizante).length,
+      gruposActivos: grupos?.filter(g => g.estado === 'activo').length || 0
+    };
+  }, [filtrarJovenes, grupos]);
+
+  // Función para obtener cumpleaños por mes usando datos reales
+  const getCumpleanosPorMesReal = (mes: number) => {
+    if (!jovenes) return { mes: '', cumpleanos: [], total: 0 };
+    
+    const nombresMeses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    const cumpleanerosMes = jovenes.filter(joven => {
+      if (!joven.fecha_nacimiento || joven.estado !== 'activo') return false;
+      const fecha = new Date(joven.fecha_nacimiento);
+      return fecha.getMonth() + 1 === mes;
+    }).map(joven => ({
+      nombre: joven.nombre_completo,
+      fecha: new Date(joven.fecha_nacimiento).toLocaleDateString('es-ES'),
+      edad: joven.edad || Math.floor((new Date().getTime() - new Date(joven.fecha_nacimiento).getTime()) / (365.25 * 24 * 60 * 60 * 1000)),
+      celular: joven.celular,
+      fechaOriginal: joven.fecha_nacimiento // Guardar fecha original para ordenamiento
+    })).sort((a, b) => {
+      // Ordenar por día del mes (los que cumplen primero primero)
+      const fechaA = new Date(a.fechaOriginal);
+      const fechaB = new Date(b.fechaOriginal);
+      const diaA = fechaA.getDate();
+      const diaB = fechaB.getDate();
+      return diaA - diaB;
+    });
+
+    return {
+      mes: nombresMeses[mes - 1],
+      cumpleanos: cumpleanerosMes,
+      total: cumpleanerosMes.length
+    };
+  };
 
   const tiposReporte = [
     { value: 'general', label: 'General Ministerial', icon: FileText, desc: 'Resumen completo de la membresía', color: '#00338D' },
@@ -157,13 +236,17 @@ export default function ReportesPage() {
 
     switch (tipoReporte) {
       case 'general':
+        if (!estadisticasReales) {
+          doc.text('Cargando datos...', 15, yPosition);
+          break;
+        }
         const datosGenerales = [
-          ['Total Jóvenes Registrados', mockReportes.general.totalJovenes.toString(), 'Activos'],
-          ['Jóvenes Bautizados', mockReportes.general.bautizados.toString(), '56.7%'],
-          ['Jóvenes Sellados', mockReportes.general.sellados.toString(), '30.0%'],
-          ['Jóvenes Servidores', mockReportes.general.servidores.toString(), '40.0%'],
-          ['Grupos Activos', '8', 'Líderes asignados'],
-          ['Cumpleaños este mes', '12', 'Próximos 30 días: 25']
+          ['Total Jóvenes Registrados', estadisticasReales.totalJovenes.toString(), 'Activos'],
+          ['Jóvenes Bautizados', estadisticasReales.bautizados.toString(), `${((estadisticasReales.bautizados / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`],
+          ['Jóvenes Sellados', estadisticasReales.sellados.toString(), `${((estadisticasReales.sellados / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`],
+          ['Jóvenes Servidores', estadisticasReales.servidores.toString(), `${((estadisticasReales.servidores / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`],
+          ['Grupos Activos', estadisticasReales.gruposActivos.toString(), 'Líderes asignados'],
+          ['Cumpleaños este mes', estadisticasMes.totalEnMes.toString(), `Próximos 30 días: ${proximos30.length}`]
         ];
 
         autoTable(doc, {
@@ -174,34 +257,88 @@ export default function ReportesPage() {
           headStyles: { fillColor: colores.primario, textColor: colores.blanco },
           styles: { fontSize: 10 }
         });
-        break;
+        yPosition = (doc as any).lastAutoTable.finalY + 15;
+
+        // Lista completa de jóvenes
+        doc.setFontSize(14);
+        doc.setTextColor(colores.primario);
+        doc.text('LISTA COMPLETA DE JÓVENES REGISTRADOS', 15, yPosition);
+        yPosition += 10;
+
+        if (filtrarJovenes && filtrarJovenes.length > 0) {
+          const jovenesFiltrados = filtrarJovenes.map((joven, idx) => {
+            const numero = idx + 1;
+            return [
+              (idx + 1).toString(),
+              joven.nombre_completo,
+              new Date(joven.fecha_nacimiento).toLocaleDateString('es-ES'),
+              (joven.edad || Math.floor((new Date().getTime() - new Date(joven.fecha_nacimiento).getTime()) / (365.25 * 24 * 60 * 60 * 1000))).toString(),
+              joven.celular || 'N/A',
+              joven.bautizado ? 'Sí' : 'No',
+              joven.sellado ? 'Sí' : 'No',
+              joven.servidor ? 'Sí' : 'No',
+              joven.simpatizante ? 'Sí' : 'No'
+            ];
+          });
+
+          autoTable(doc, {
+            startY: yPosition,
+            head: [['#', 'Nombre\nCompleto', 'Fecha\nNac.', 'Edad', 'Celular', 'Baut.', 'Sell.', 'Serv.', 'Simp.']],
+            body: jovenesFiltrados,
+            theme: 'grid',
+            headStyles: { 
+              fillColor: colores.azulMedio, 
+              textColor: colores.blanco,
+              fontStyle: 'bold',
+              fontSize: 7,
+              halign: 'center',
+              valign: 'middle'
+            },
+            styles: { 
+              fontSize: 6,
+              cellPadding: 2,
+              overflow: 'linebreak',
+              cellWidth: 'wrap'
+            },
+            columnStyles: {
+              0: { cellWidth: 10, halign: 'center', fontStyle: 'bold', fontSize: 7 }, // #
+              1: { cellWidth: 38, fontSize: 5 }, // Nombre
+              2: { cellWidth: 18, halign: 'center', fontSize: 5 }, // Fecha
+              3: { cellWidth: 10, halign: 'center', fontSize: 6 }, // Edad
+              4: { cellWidth: 20, halign: 'center', fontSize: 5 }, // Celular
+              5: { cellWidth: 10, halign: 'center', fontSize: 5 }, // Bautizado
+              6: { cellWidth: 10, halign: 'center', fontSize: 5 }, // Sellado
+              7: { cellWidth: 10, halign: 'center', fontSize: 5 }, // Servidor
+              8: { cellWidth: 10, halign: 'center', fontSize: 5 }  // Simpatizante
+            },
+            alternateRowStyles: { fillColor: [252, 252, 252] },
+            margin: { left: 15, right: 15 },
+            tableWidth: 170
+          });
+        } else {
+          doc.setFontSize(12);
+          doc.setTextColor(colores.texto);
+          doc.text('No hay jóvenes registrados.', 15, yPosition);
+        }
 
       case 'edad':
-        const datosEdad = [
-          ['12-15 años', '45', '30.0%'],
-          ['16-18 años', '52', '34.7%'],
-          ['19-25 años', '38', '25.3%'],
-          ['26-30 años', '12', '8.0%'],
-          ['31-35 años', '3', '2.0%']
-        ];
-
-        autoTable(doc, {
-          startY: yPosition,
-          head: [['Rango de Edad', 'Cantidad', 'Porcentaje']],
-          body: datosEdad,
-          theme: 'grid',
-          headStyles: { fillColor: colores.secundario, textColor: colores.texto },
-          styles: { fontSize: 10 }
-        });
+        // Reporte de edad eliminado según solicitud del usuario
+        doc.setFontSize(12);
+        doc.setTextColor(colores.texto);
+        doc.text('El reporte de rangos de edad ha sido deshabilitado.', 15, yPosition);
         break;
 
       case 'estado':
+        if (!estadisticasReales) {
+          doc.text('Cargando datos...', 15, yPosition);
+          break;
+        }
         const datosEstado = [
-          ['Bautizados', mockReportes.general.bautizados.toString(), '56.7%'],
-          ['Sellados', mockReportes.general.sellados.toString(), '30.0%'],
-          ['Servidores', mockReportes.general.servidores.toString(), '40.0%'],
-          ['Simpatizantes', mockReportes.general.simpatizantes.toString(), '10.0%'],
-          ['No Clasificados', '5', '3.3%']
+          ['Bautizados', estadisticasReales.bautizados.toString(), `${((estadisticasReales.bautizados / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`],
+          ['Sellados', estadisticasReales.sellados.toString(), `${((estadisticasReales.sellados / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`],
+          ['Servidores', estadisticasReales.servidores.toString(), `${((estadisticasReales.servidores / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`],
+          ['Simpatizantes', estadisticasReales.simpatizantes.toString(), `${((estadisticasReales.simpatizantes / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`],
+          ['No Clasificados', (estadisticasReales.totalJovenes - estadisticasReales.bautizados - estadisticasReales.sellados - estadisticasReales.servidores - estadisticasReales.simpatizantes).toString(), `${(((estadisticasReales.totalJovenes - estadisticasReales.bautizados - estadisticasReales.sellados - estadisticasReales.servidores - estadisticasReales.simpatizantes) / estadisticasReales.totalJovenes) * 100).toFixed(1)}%`]
         ];
 
         autoTable(doc, {
@@ -215,7 +352,7 @@ export default function ReportesPage() {
         break;
 
       case 'cumpleanos':
-        const datosMesCumpleanos = getCumpleanosPorMes(mesCumpleanos);
+        const datosMesCumpleanos = getCumpleanosPorMesReal(mesCumpleanos);
         doc.setFontSize(14);
         doc.setTextColor(colores.primario);
         doc.text(`CUMPLEAÑOS DE ${datosMesCumpleanos.mes.toUpperCase()}`, 15, yPosition);
@@ -245,12 +382,16 @@ export default function ReportesPage() {
         break;
 
       case 'grupos':
-        const datosGrupos = [
-          ['Grupo Alfa', '12', 'Líder: Juan Pérez'],
-          ['Grupo Beta', '15', 'Líder: María García'],
-          ['Grupo Gamma', '10', 'Líder: Carlos López'],
-          ['Grupo Delta', '8', 'Líder: Ana Rodríguez']
-        ];
+        if (!grupos) {
+          doc.text('Cargando datos de grupos...', 15, yPosition);
+          break;
+        }
+        const gruposActivos = grupos.filter(g => g.estado === 'activo');
+        const datosGrupos = gruposActivos.map(grupo => [
+          grupo.nombre,
+          jovenes?.filter(j => j.grupo_id === grupo.id && j.estado === 'activo').length.toString() || '0',
+          grupo.lider_id ? 'Líder asignado' : 'Sin líder'
+        ]);
 
         autoTable(doc, {
           startY: yPosition,
@@ -297,7 +438,7 @@ export default function ReportesPage() {
 
   const renderPreview = () => {
     if (tipoReporte === 'cumpleanos') {
-      const datosMes = getCumpleanosPorMes(mesCumpleanos);
+      const datosMes = getCumpleanosPorMesReal(mesCumpleanos);
       const nombresMeses = [
         'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
@@ -351,7 +492,196 @@ export default function ReportesPage() {
       );
     }
 
-    if (tipoReporte !== 'general') {
+    if (tipoReporte === 'edad') {
+      // Calcular rangos de edad reales
+      const rangosEdad = [
+        { rango: '12-15 años', min: 12, max: 15, count: 0 },
+        { rango: '16-18 años', min: 16, max: 18, count: 0 },
+        { rango: '19-25 años', min: 19, max: 25, count: 0 },
+        { rango: '26-30 años', min: 26, max: 30, count: 0 },
+        { rango: '31-35 años', min: 31, max: 35, count: 0 },
+        { rango: '36+ años', min: 36, max: 999, count: 0 }
+      ];
+
+      if (jovenes) {
+        const jovenesActivos = jovenes.filter(j => j.estado === 'activo');
+        const totalJovenes = jovenesActivos.length;
+
+        jovenesActivos.forEach(joven => {
+          const edad = joven.edad || Math.floor((new Date().getTime() - new Date(joven.fecha_nacimiento).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+          const rango = rangosEdad.find(r => edad >= r.min && edad <= r.max);
+          if (rango) rango.count++;
+        });
+
+        return (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h4 className="text-lg md:text-xl font-black text-slate-800 uppercase tracking-widest">
+                Directorio por Edad
+              </h4>
+              <p className="text-sm text-slate-600 font-medium">
+                Clasificación etaria de {totalJovenes} jóvenes registrados
+              </p>
+            </div>
+
+            {/* Gráfico de barras */}
+            <div className="bg-slate-50/50 rounded-2xl p-4 md:p-6 border border-slate-100">
+              <h5 className="text-sm md:text-base font-bold text-slate-800 mb-4 text-center">Distribución por Rangos de Edad</h5>
+              <div className="space-y-3 md:space-y-4">
+                {rangosEdad.filter(r => r.count > 0).map((rango, idx) => {
+                  const porcentaje = totalJovenes > 0 ? (rango.count / totalJovenes) * 100 : 0;
+                  return (
+                    <div key={idx} className="flex items-center gap-2 md:gap-3">
+                      <div className="w-16 md:w-20 text-xs md:text-sm font-medium text-slate-600 flex-shrink-0">{rango.rango}</div>
+                      <div className="flex-1 bg-slate-200 rounded-full h-2 md:h-3">
+                        <div 
+                          className="bg-blue-600 h-2 md:h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${porcentaje}%` }}
+                        ></div>
+                      </div>
+                      <div className="w-8 md:w-12 text-xs md:text-sm font-bold text-slate-700 text-right flex-shrink-0">{rango.count}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="bg-slate-50/50 rounded-2xl p-4 md:p-6 border border-slate-100">
+              <h5 className="text-sm md:text-base font-bold text-slate-800 mb-4 text-center">Distribución por Rangos de Edad</h5>
+              <div className="space-y-3 md:space-y-4">
+                {rangosEdad.filter(r => r.count > 0).map((rango, idx) => {
+                  const porcentaje = totalJovenes > 0 ? (rango.count / totalJovenes) * 100 : 0;
+                  return (
+                    <div key={idx} className="flex items-center gap-2 md:gap-3">
+                      <div className="w-16 md:w-20 text-xs md:text-sm font-medium text-slate-600 flex-shrink-0">{rango.rango}</div>
+                      <div className="flex-1 bg-slate-200 rounded-full h-2 md:h-3">
+                        <div 
+                          className="bg-blue-600 h-2 md:h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${porcentaje}%` }}
+                        ></div>
+                      </div>
+                      <div className="w-8 md:w-12 text-xs md:text-sm font-bold text-slate-700 text-right flex-shrink-0">{rango.count}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    if (tipoReporte === 'estado') {
+      if (estadisticasReales) {
+        const datosEstado = [
+          { estado: 'Bautizados', count: estadisticasReales.bautizados, color: 'emerald' },
+          { estado: 'Sellados', count: estadisticasReales.sellados, color: 'purple' },
+          { estado: 'Servidores', count: estadisticasReales.servidores, color: 'amber' },
+          { estado: 'Simpatizantes', count: estadisticasReales.simpatizantes, color: 'blue' },
+          { estado: 'No Clasificados', count: estadisticasReales.totalJovenes - estadisticasReales.bautizados - estadisticasReales.sellados - estadisticasReales.servidores - estadisticasReales.simpatizantes, color: 'slate' }
+        ];
+
+        return (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h4 className="text-lg md:text-xl font-black text-slate-800 uppercase tracking-widest">
+                Estado Espiritual
+              </h4>
+              <p className="text-sm text-slate-600 font-medium">
+                Filtro por bautismo, sellamiento y servicio
+              </p>
+            </div>
+
+            {/* Tabla de estados */}
+            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[350px]">
+                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    <tr>
+                      <th className="text-left p-3 md:p-4 font-bold text-white">Estado Espiritual</th>
+                      <th className="text-center p-3 md:p-4 font-bold text-white w-20 md:w-24">Cantidad</th>
+                      <th className="text-center p-3 md:p-4 font-bold text-white w-20 md:w-24">Porcentaje</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {datosEstado.filter(d => d.count > 0).map((estado, idx) => {
+                      const porcentaje = estadisticasReales.totalJovenes > 0 ? ((estado.count / estadisticasReales.totalJovenes) * 100).toFixed(1) : '0.0';
+                      return (
+                        <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                          <td className="p-3 md:p-4 font-semibold text-slate-800">{estado.estado}</td>
+                          <td className="p-3 md:p-4 text-center font-bold text-slate-700">{estado.count}</td>
+                          <td className="p-3 md:p-4 text-center">
+                            <Badge className={`bg-${estado.color}-50 text-${estado.color}-600 border-none font-bold text-xs md:text-sm`}>
+                              {porcentaje}%
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Gráfico circular */}
+            <div className="bg-slate-50/50 rounded-2xl p-4 md:p-6 border border-slate-100">
+              <h5 className="text-base font-bold text-slate-800 mb-4 text-center">Distribución por Estado Espiritual</h5>
+              <div className="flex flex-wrap justify-center gap-3 md:gap-4 mb-4">
+                {datosEstado.filter(d => d.count > 0).map((estado, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className={`w-3 h-3 md:w-4 md:h-4 rounded-full bg-${estado.color}-500`}></div>
+                    <span className="text-xs md:text-sm font-medium text-slate-700">{estado.estado}: {estado.count}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-center">
+                <div className="relative w-24 h-24 md:w-32 md:h-32">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    {(() => {
+                      let cumulativePercent = 0;
+                      return datosEstado.filter(d => d.count > 0).map((estado, idx) => {
+                        const percent = estadisticasReales.totalJovenes > 0 ? (estado.count / estadisticasReales.totalJovenes) * 100 : 0;
+                        const strokeDasharray = `${percent} ${100 - percent}`;
+                        const strokeDashoffset = -cumulativePercent;
+                        cumulativePercent += percent;
+                        
+                        const colors = {
+                          emerald: '#10b981',
+                          purple: '#8b5cf6',
+                          amber: '#f59e0b',
+                          blue: '#3b82f6',
+                          slate: '#64748b'
+                        };
+                        
+                        return (
+                          <circle
+                            key={idx}
+                            cx="18"
+                            cy="18"
+                            r="16"
+                            stroke={colors[estado.color as keyof typeof colors]}
+                            strokeWidth="3"
+                            fill="transparent"
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                          />
+                        );
+                      });
+                    })()}
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xs md:text-sm font-bold text-slate-600">{estadisticasReales.totalJovenes}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    if (tipoReporte !== 'general' && tipoReporte !== 'cumpleanos' && tipoReporte !== 'edad' && tipoReporte !== 'estado') {
       return (
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
@@ -374,10 +704,18 @@ export default function ReportesPage() {
         className="space-y-8"
       >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatMiniCard label="Total" value={mockReportes.general.totalJovenes} color="blue" icon={Users} />
-          <StatMiniCard label="Bautizados" value={mockReportes.general.bautizados} color="emerald" icon={ShieldCheck} />
-          <StatMiniCard label="Sellados" value={mockReportes.general.sellados} color="violet" icon={Target} />
-          <StatMiniCard label="Servidores" value={mockReportes.general.servidores} color="amber" icon={Zap} />
+          {estadisticasReales ? (
+            <>
+              <StatMiniCard label="Total" value={estadisticasReales.totalJovenes} color="blue" icon={Users} />
+              <StatMiniCard label="Bautizados" value={estadisticasReales.bautizados} color="emerald" icon={ShieldCheck} />
+              <StatMiniCard label="Sellados" value={estadisticasReales.sellados} color="violet" icon={Target} />
+              <StatMiniCard label="Servidores" value={estadisticasReales.servidores} color="amber" icon={Zap} />
+            </>
+          ) : (
+            <div className="col-span-4 text-center py-8">
+              <p className="text-slate-500">Cargando estadísticas...</p>
+            </div>
+          )}
         </div>
 
         <div className="bg-slate-50/50 rounded-[2rem] p-8 border border-slate-100">
@@ -415,6 +753,160 @@ export default function ReportesPage() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Lista completa de jóvenes */}
+        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <Users size={20} className="text-blue-600" />
+              Lista Completa de Jóvenes Registrados
+            </h3>
+            <Badge className="bg-blue-50 text-blue-600 border-none font-bold px-4 py-2">
+              {filtrarJovenes.length} registrados
+            </Badge>
+          </div>
+          
+          {jovenes && loadingJovenes === false ? (
+            <>
+              {/* Vista Desktop - Tabla */}
+              <div className="hidden md:block max-h-[600px] overflow-y-auto rounded-xl border border-slate-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10">
+                    <tr>
+                      <th className="text-center p-4 font-bold text-white w-16">#</th>
+                      <th className="text-left p-4 font-bold text-white">Nombre Completo</th>
+                      <th className="text-left p-4 font-bold text-white">Fecha Nacimiento</th>
+                      <th className="text-center p-4 font-bold text-white w-20">Edad</th>
+                      <th className="text-left p-4 font-bold text-white">Celular</th>
+                      <th className="text-center p-4 font-bold text-white w-24">Bautizado</th>
+                      <th className="text-center p-4 font-bold text-white w-24">Sellado</th>
+                      <th className="text-center p-4 font-bold text-white w-24">Servidor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtrarJovenes.map((joven, idx) => (
+                      <tr 
+                        key={joven.id} 
+                        className={`${
+                          idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
+                        } hover:bg-blue-50/30 transition-colors duration-150 border-b border-slate-100 last:border-b-0`}
+                      >
+                        <td className="p-4 text-center">
+                          <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm mx-auto">
+                            {idx + 1}
+                          </div>
+                        </td>
+                        <td className="p-4 text-slate-800 font-semibold">
+                          {joven.nombre_completo}
+                        </td>
+                        <td className="p-4 text-slate-600 font-medium">
+                          {new Date(joven.fecha_nacimiento).toLocaleDateString('es-ES')}
+                        </td>
+                        <td className="p-4 text-center text-slate-600 font-medium">
+                          {joven.edad || Math.floor((new Date().getTime() - new Date(joven.fecha_nacimiento).getTime()) / (365.25 * 24 * 60 * 60 * 1000))}
+                        </td>
+                        <td className="p-4 text-slate-600 font-medium">
+                          {joven.celular || 'N/A'}
+                        </td>
+                        <td className="p-4 text-center">
+                          <Badge className={`${
+                            joven.bautizado 
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                              : 'bg-slate-100 text-slate-500 border-slate-200'
+                          } border font-bold px-3 py-1`}>
+                            {joven.bautizado ? '✓ Sí' : '✗ No'}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-center">
+                          <Badge className={`${
+                            joven.sellado 
+                              ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                              : 'bg-slate-100 text-slate-500 border-slate-200'
+                          } border font-bold px-3 py-1`}>
+                            {joven.sellado ? '✓ Sí' : '✗ No'}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-center">
+                          <Badge className={`${
+                            joven.servidor 
+                              ? 'bg-amber-100 text-amber-700 border-amber-200' 
+                              : 'bg-slate-100 text-slate-500 border-slate-200'
+                          } border font-bold px-3 py-1`}>
+                            {joven.servidor ? '✓ Sí' : '✗ No'}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Vista Mobile - Tarjetas */}
+              <div className="md:hidden space-y-4 max-h-[600px] overflow-y-auto">
+                {filtrarJovenes.map((joven, idx) => (
+                  <motion.div
+                    key={joven.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    {/* Header con número y nombre */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-slate-800 text-sm truncate">{joven.nombre_completo}</h4>
+                        <p className="text-xs text-slate-500">
+                          {new Date(joven.fecha_nacimiento).toLocaleDateString('es-ES')} • 
+                          {joven.edad || Math.floor((new Date().getTime() - new Date(joven.fecha_nacimiento).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} años
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Información de contacto */}
+                    <div className="mb-3">
+                      <p className="text-xs text-slate-600">
+                        <span className="font-medium">📱 Celular:</span> {joven.celular || 'N/A'}
+                      </p>
+                    </div>
+
+                    {/* Estados espirituales */}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className={`text-xs px-2 py-1 ${
+                        joven.bautizado 
+                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      } border`}>
+                        {joven.bautizado ? '✓ Bautizado' : '✗ No bautizado'}
+                      </Badge>
+                      <Badge className={`text-xs px-2 py-1 ${
+                        joven.sellado 
+                          ? 'bg-purple-100 text-purple-700 border-purple-200' 
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      } border`}>
+                        {joven.sellado ? '✓ Sellado' : '✗ No sellado'}
+                      </Badge>
+                      <Badge className={`text-xs px-2 py-1 ${
+                        joven.servidor 
+                          ? 'bg-amber-100 text-amber-700 border-amber-200' 
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      } border`}>
+                        {joven.servidor ? '✓ Servidor' : '✗ No servidor'}
+                      </Badge>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-slate-600 font-medium">Cargando lista de jóvenes...</p>
+            </div>
+          )}
         </div>
       </motion.div>
     );
@@ -487,6 +979,65 @@ export default function ReportesPage() {
               </div>
 
               <div className="p-6 bg-slate-50/50 rounded-3xl border border-slate-100 space-y-6">
+                {/* Filtros para reporte general */}
+                {tipoReporte === 'general' && (
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-3">
+                      Estado Espiritual (Selección Múltiple)
+                    </label>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="bautizado"
+                          checked={filtrosEstados.bautizado}
+                          onChange={(e) => setFiltrosEstados(prev => ({ ...prev, bautizado: e.target.checked }))}
+                          className="h-4 w-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <label htmlFor="bautizado" className="text-sm font-bold text-slate-700 cursor-pointer">
+                          Bautizados
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="sellado"
+                          checked={filtrosEstados.sellado}
+                          onChange={(e) => setFiltrosEstados(prev => ({ ...prev, sellado: e.target.checked }))}
+                          className="h-4 w-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-purple-500 focus:ring-2"
+                        />
+                        <label htmlFor="sellado" className="text-sm font-bold text-slate-700 cursor-pointer">
+                          Sellados
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="servidor"
+                          checked={filtrosEstados.servidor}
+                          onChange={(e) => setFiltrosEstados(prev => ({ ...prev, servidor: e.target.checked }))}
+                          className="h-4 w-4 text-amber-600 bg-white border-slate-300 rounded focus:ring-amber-500 focus:ring-2"
+                        />
+                        <label htmlFor="servidor" className="text-sm font-bold text-slate-700 cursor-pointer">
+                          Servidores
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          id="simpatizante"
+                          checked={filtrosEstados.simpatizante}
+                          onChange={(e) => setFiltrosEstados(prev => ({ ...prev, simpatizante: e.target.checked }))}
+                          className="h-4 w-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-emerald-500 focus:ring-2"
+                        />
+                        <label htmlFor="simpatizante" className="text-sm font-bold text-slate-700 cursor-pointer">
+                          Simpatizantes
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-[11px] font-black text-slate-900 uppercase tracking-widest mb-3">
                     Formato de Salida SOLO PDF
