@@ -381,51 +381,7 @@ export default function DashboardPage() {
 
         {/* Sidebar Widgets */}
         <motion.div variants={itemVariants} className="space-y-8">
-          {/* Calendar Widget */}
-          <Card className="p-8 border-slate-200/60 shadow-xl bg-white/80 backdrop-blur-xl rounded-[2.5rem] overflow-hidden relative group">
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="h-12 w-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 group-hover:scale-110 transition-transform">
-                  <CalendarIcon size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Eventos</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">Próximas fechas</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <EventItem
-                  title="Reunión General"
-                  date="Sábado, Junio 15 • 6:00 PM"
-                  type="meeting"
-                  tag="Importante"
-                />
-                <EventItem
-                  title="Vigilia de Oración"
-                  date="Viernes, Junio 28 • 9:00 PM"
-                  type="vigil"
-                  tag="Especial"
-                />
-                <EventItem
-                  title="Cumpleañeros"
-                  date="Esta semana"
-                  type="birthday"
-                  tag="Social"
-                  link="/dashboard/cumpleanos"
-                />
-              </div>
-
-              <Link href="/dashboard/grupos">
-                <Button className="w-full mt-8 h-12 bg-slate-950 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm tracking-wide transition-all group/btn shadow-lg">
-                  Ver Todo el Calendario
-                  <ChevronRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-            </div>
-            {/* Decoration */}
-            <div className="absolute -top-10 -right-10 h-32 w-32 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
-          </Card>
+          {/* Calendar Widget removed as requested */}
 
           {/* Activity Widget */}
           <Card className="p-8 border-slate-200/60 shadow-lg bg-slate-950 text-white rounded-[2.5rem] overflow-hidden relative">
