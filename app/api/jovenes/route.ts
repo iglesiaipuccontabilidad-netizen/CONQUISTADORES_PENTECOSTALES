@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { jwtDecode } from 'jwt-decode'
 import { createCorsResponse, createCorsErrorResponse, createCorsOptionsResponse } from '@/utils/cors'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ No authorization header')
       return NextResponse.json(
         { error: 'Token de autorización requerido' },
         { status: 401 }
@@ -37,43 +40,46 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.split('Bearer ')[1]
+    console.log('🔑 Token received, length:', token.length)
 
-    // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
+    // Decode JWT to get user ID
+    let userId: string
+    try {
+      const decoded: any = jwtDecode(token)
+      userId = decoded.sub
+      console.log('✅ Token decoded, user ID:', userId)
+    } catch (err) {
+      console.log('❌ Invalid token:', err)
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
       )
     }
 
-    // Obtener información del usuario actual
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('rol, id')
-      .eq('id', user.id)
-      .single()
+    // Create userClient for queries (respects RLS)
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      },
+    })
 
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
-      )
-    }
+    console.log('✅ Auth user validated')
 
     // Verificar si es una búsqueda por nombre (para verificar duplicados)
     const { searchParams } = new URL(request.url)
     const nombreBusqueda = searchParams.get('nombre')
-    
+
     if (nombreBusqueda) {
       // Búsqueda específica por nombre (case insensitive)
-      const { data: jovenEncontrado, error: searchError } = await supabase
+      const { data: jovenEncontrado, error: searchError } = await userClient
         .from('jovenes')
         .select('id, nombre_completo')
         .ilike('nombre_completo', nombreBusqueda)
         .eq('estado', 'activo')
         .limit(1)
-        
+
       if (searchError) {
         console.error('Error al buscar joven por nombre:', searchError)
         return NextResponse.json({
@@ -85,7 +91,7 @@ export async function GET(request: NextRequest) {
           }
         })
       }
-      
+
       return NextResponse.json({
         success: true,
         data: jovenEncontrado || [],
@@ -96,26 +102,11 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    let query = supabase
+    const { data: jovenes, error } = await userClient
       .from('jovenes')
       .select('id, nombre_completo, fecha_nacimiento, celular, grupo_id, estado, bautizado, sellado, servidor, simpatizante, created_at')
       .eq('estado', 'activo')
       .order('nombre_completo')
-
-    // Si es líder, solo ve su grupo
-    if (currentUser.rol === 'lider') {
-      const { data: grupo } = await supabase
-        .from('grupos')
-        .select('id')
-        .eq('lider_id', user.id)
-        .single()
-
-      if (grupo) {
-        query = query.eq('grupo_id', grupo.id)
-      }
-    }
-
-    const { data: jovenes, error } = await query
 
     if (error) {
       console.error('Error al obtener jóvenes:', error)
@@ -159,31 +150,33 @@ export async function POST(request: NextRequest) {
     const token = authHeader.split('Bearer ')[1]
     const body = await request.json()
 
-    // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
+    // Decode JWT to get user ID
+    let userId: string
+    try {
+      const decoded: any = jwtDecode(token)
+      userId = decoded.sub
+      console.log('✅ Token decoded for POST, user ID:', userId)
+    } catch (err) {
+      console.log('❌ Invalid token:', err)
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
       )
     }
 
-    // Verificar que el usuario existe en la tabla users
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('rol')
-      .eq('id', user.id)
-      .single()
+    // Create userClient for mutations (respects RLS)
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      },
+    })
 
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
-      )
-    }
+    console.log('✅ Auth user validated for POST')
 
     // Crear joven
-    const { data: joven, error } = await supabase
+    const { data: joven, error } = await userClient
       .from('jovenes')
       .insert(body)
       .select()

@@ -3,9 +3,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../utils/api-client'
 import { Grupo, ApiResponse } from '../types/index'
+import { useAuth } from './useAuth'
 
 export const useGrupos = () => {
   const queryClient = useQueryClient()
+  const { session, loading } = useAuth()
 
   // GET /grupos - Listar todos los grupos
   const { data: grupos, isLoading, error } = useQuery<Grupo[]>({
@@ -14,6 +16,7 @@ export const useGrupos = () => {
       const response = await apiClient.get<ApiResponse<Grupo[]>>('/grupos')
       return response.data?.data || []
     },
+    enabled: !!session && !loading,
   })
 
   const useGetGrupo = (id: string) => {

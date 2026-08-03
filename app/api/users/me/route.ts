@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { jwtDecode } from 'jwt-decode'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // GET /api/users/me - Obtener información del usuario actual
 export async function GET(request: NextRequest) {
@@ -24,28 +18,45 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.split('Bearer ')[1]
 
-    // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
+    // Decode JWT to get user ID
+    let userId: string
+    try {
+      const decoded: any = jwtDecode(token)
+      userId = decoded.sub
+      console.log('✅ Token decoded, user ID:', userId)
+    } catch (err) {
+      console.log('❌ Invalid token:', err)
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
       )
     }
 
+    // Create userClient for queries (respects RLS)
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      },
+    })
+
     // Obtener información del usuario desde la tabla users
-    const { data: currentUser, error } = await supabase
+    const { data: currentUser, error } = await userClient
       .from('users')
       .select('id, email, nombre_completo, telefono, rol, estado, ultima_sesion, created_at, updated_at')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single()
 
     if (error || !currentUser) {
+      console.log('❌ User not found:', error?.message)
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
       )
     }
+
+    console.log('✅ User found:', currentUser.id)
 
     return NextResponse.json({
       success: true,

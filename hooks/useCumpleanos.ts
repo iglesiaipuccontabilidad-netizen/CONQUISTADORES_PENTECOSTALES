@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '../utils/api-client'
+import { useAuth } from './useAuth'
 import type { Joven } from '../types'
 import type { ApiResponse } from '../types/index'
 
@@ -215,6 +216,8 @@ const getProximos30Dias = (jovenes: Joven[]): CumpleanosProximos30[] => {
 }
 
 export const useCumpleanos = () => {
+  const { session, loading } = useAuth()
+
   // Obtener todos los jóvenes
   const { data: jovenes = [], isLoading, error } = useQuery<Joven[]>({
     queryKey: ['cumpleanos-jovenes'],
@@ -222,6 +225,7 @@ export const useCumpleanos = () => {
       const response = await apiClient.get<ApiResponse<Joven[]>>('/jovenes')
       return response.data?.data || []
     },
+    enabled: !!session && !loading,
   })
 
   // Calcular datos procesados

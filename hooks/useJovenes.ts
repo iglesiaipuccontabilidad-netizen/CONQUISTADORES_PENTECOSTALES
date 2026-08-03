@@ -3,9 +3,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '../utils/api-client'
 import { Joven, ApiResponse, RegistroJovenFormData } from '../types/index'
+import { useAuth } from './useAuth'
 
 export const useJovenes = () => {
   const queryClient = useQueryClient()
+  const { session, loading } = useAuth()
 
   // GET /jovenes - Listar todos los jóvenes
   const { data: jovenes, isLoading, error } = useQuery<Joven[]>({
@@ -14,6 +16,7 @@ export const useJovenes = () => {
       const response = await apiClient.get<ApiResponse<Joven[]>>('/jovenes')
       return response.data?.data || []
     },
+    enabled: !!session && !loading,
   })
 
   const useGetJoven = (id: string) => {

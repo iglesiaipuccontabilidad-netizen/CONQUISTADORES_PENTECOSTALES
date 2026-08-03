@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { setApiToken } from '../utils/api-client'
 
 export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null)
@@ -10,29 +11,48 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const getSession = async () => {
+    let mounted = true
+
+    const initAuth = async () => {
       try {
-        const { data, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
-        setSession(data.session)
+        console.log('🔐 Initializing auth session...')
+
+        // Use onAuthStateChange - more reliable than getSession()
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, newSession) => {
+            console.log('🔐 Auth state changed:', event, { hasSession: !!newSession })
+
+            if (mounted) {
+              if (newSession) {
+                console.log('✅ Session active:', newSession.user.email)
+                setSession(newSession)
+                setApiToken(newSession.access_token)
+              } else {
+                console.log('❌ Session cleared')
+                setSession(null)
+                setApiToken(null)
+              }
+              setLoading(false)
+            }
+          }
+        )
+
+        return () => subscription?.unsubscribe()
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error loading session')
-      } finally {
-        setLoading(false)
+        console.error('❌ Auth initialization error:', err)
+        if (mounted) {
+          setError(err instanceof Error ? err.message : 'Error initializing auth')
+          setLoading(false)
+        }
       }
     }
 
-    getSession()
+    const unsubscribe = initAuth()
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    return () => subscription?.unsubscribe()
+    return () => {
+      mounted = false
+      unsubscribe?.then(fn => fn?.())
+    }
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -40,15 +60,22 @@ export const useAuth = () => {
       setLoading(true)
       setError(null)
 
+      console.log('🔑 Attempting login for:', email)
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
+
       if (loginError) throw loginError
+
+      console.log('✅ Login successful:', data.user.email)
       setSession(data.session)
+      setApiToken(data.session?.access_token || null)
+
       return { success: true, session: data.session }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error logging in'
+      console.error('❌ Login error:', message)
       setError(message)
       return { success: false, error: message }
     } finally {
@@ -59,12 +86,16 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       setLoading(true)
+      console.log('👋 Logging out...')
       const { error: logoutError } = await supabase.auth.signOut()
       if (logoutError) throw logoutError
       setSession(null)
+      setApiToken(null)
+      console.log('✅ Logged out successfully')
       return { success: true }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error logging out'
+      console.error('❌ Logout error:', message)
       setError(message)
       return { success: false, error: message }
     } finally {

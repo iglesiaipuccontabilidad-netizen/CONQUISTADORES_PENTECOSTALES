@@ -48,6 +48,11 @@ export default function LoginPage() {
           localStorage.setItem('email', data.email)
         }
         toast.success('¡Bienvenido de nuevo!')
+
+        // Wait a bit for session to fully initialize
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Push to dashboard
         router.push('/dashboard')
       } else {
         toast.error(result.error || 'Credenciales incorrectas')
