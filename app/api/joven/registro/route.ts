@@ -24,10 +24,11 @@ export async function POST(request: NextRequest) {
     console.log('📝 Body recibido:', JSON.stringify(body, null, 2));
 
     // Validaciones básicas
-    const { 
-      nombre_completo, 
-      fecha_nacimiento, 
-      celular, 
+    const {
+      nombre_completo,
+      cedula,
+      fecha_nacimiento,
+      celular,
       direccion,
       bautizado,
       sellado,
@@ -36,15 +37,24 @@ export async function POST(request: NextRequest) {
       consentimiento_datos_personales
     } = body
 
-    if (!nombre_completo || !fecha_nacimiento || !celular) {
+    if (!nombre_completo || !cedula || !fecha_nacimiento || !celular) {
       console.log('❌ Error: Campos obligatorios faltantes');
       return NextResponse.json(
-        { status: 'error', error: 'Campos obligatorios: nombre_completo, fecha_nacimiento, celular' },
+        { status: 'error', error: 'Campos obligatorios: nombre_completo, cedula, fecha_nacimiento, celular' },
         { status: 400 }
       )
     }
 
     console.log('✅ Campos obligatorios validados');
+
+    // Validar formato de cedula
+    if (!/^\d{8,10}$/.test(cedula)) {
+      console.log('❌ Error: Cédula inválida:', cedula);
+      return NextResponse.json(
+        { status: 'error', error: 'La cédula debe tener 8-10 dígitos' },
+        { status: 400 }
+      )
+    }
 
     // Validar formato de celular
     if (!validateCelular(celular)) {
@@ -62,6 +72,34 @@ export async function POST(request: NextRequest) {
     const monthDiff = today.getMonth() - birthDate.getMonth()
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       edad--
+    }
+
+    // Verificar si ya existe un joven con el mismo cedula
+    console.log('🆔 Verificando duplicado por cédula:', cedula)
+    const { data: existingJovenByCedula, error: cedulaCheckError } = await supabase
+      .from('jovenes')
+      .select('id, nombre_completo')
+      .eq('cedula', cedula)
+      .eq('estado', 'activo')
+      .single()
+
+    if (cedulaCheckError && cedulaCheckError.code !== 'PGRST116') {
+      console.log('❌ Error al verificar cédula duplicada:', cedulaCheckError)
+      return NextResponse.json(
+        { status: 'error', error: 'Error interno del servidor' },
+        { status: 500 }
+      )
+    }
+
+    if (existingJovenByCedula) {
+      console.log('❌ Cédula duplicada encontrada:', existingJovenByCedula)
+      return NextResponse.json(
+        {
+          status: 'error',
+          error: `Ya existe un joven registrado con la cédula ${cedula} (${existingJovenByCedula.nombre_completo}). Por favor, verifica la información.`
+        },
+        { status: 400 }
+      )
     }
 
     // Verificar si ya existe un joven con el mismo nombre completo
@@ -123,11 +161,12 @@ export async function POST(request: NextRequest) {
     // Preparar datos del joven
     const jovenData = {
       nombre_completo,
+      cedula,
       fecha_nacimiento,
       edad,
       celular,
       direccion: direccion || null,
-      estado: 'activo', // Los registros desde el dashboard quedan activos directamente
+      estado: 'activo',
       bautizado: Boolean(bautizado),
       sellado: Boolean(sellado),
       servidor: Boolean(servidor),
@@ -161,14 +200,14 @@ export async function POST(request: NextRequest) {
     // Registrar log de actividad
     try {
       await supabase
-        .from('activity_logs')
+        .from('actividad_usuarios')
         .insert({
-          accion: 'creacion_joven',
-          tabla: 'jovenes',
+          accion: 'CREATE',
+          tabla_afectada: 'jovenes',
           registro_id: joven.id,
-          detalles: `Joven creado: ${nombre_completo}`,
+          detalles: { mensaje: `Joven creado: ${nombre_completo}` },
           usuario_id: null, // TODO: Obtener usuario autenticado
-          timestamp: new Date().toISOString(),
+          created_at: new Date().toISOString(),
         })
     } catch (logError) {
       console.warn('Error al registrar log de actividad:', logError)

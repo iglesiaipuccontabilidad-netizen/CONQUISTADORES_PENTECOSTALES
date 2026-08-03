@@ -17,6 +17,7 @@ export type LoginFormType = z.infer<typeof loginSchema>
 // Registro Joven Schema
 export const registroJovenSchema = z.object({
   nombre_completo: z.string().min(3, 'Nombre must be at least 3 characters'),
+  cedula: z.string().regex(/^\d{8,10}$/, 'Cédula debe tener 8-10 dígitos'),
   fecha_nacimiento: z.string().refine(
     (date: string) => validatorsColombia.validateAgeRange(date),
     'Debes tener entre 12 y 35 años'
