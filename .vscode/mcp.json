@@ -9,21 +9,28 @@
 				"--project-ref=dcgkzuouqeznxtfzgdil"
 			],
 			"env": {
-				"SUPABASE_ACCESS_TOKEN": "sbp_4710429e6481fe5e099ea345a02f0749c967f28d"
+				"SUPABASE_ACCESS_TOKEN": "your_supabase_personal_access_token_here"
 			}
 		},
-
-		"mcpContext7": {	
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
-    },
-	
-	 "mcpAceternityui": {
-      "command": "npx",
-      "args": ["aceternityui-mcp"]
-    }
-		
+		"mcpContext7": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"-y",
+				"@upstash/context7-mcp"
+			]
+		},
+		"mcpAceternityui": {
+			"command": "npx",
+			"args": [
+				"aceternityui-mcp"
+			],
+			"type": "stdio"
+		},
+		"supabase": {
+			"type": "http",
+			"url": "https://mcp.supabase.com/mcp?project_ref=dcgkzuouqeznxtfzgdil&features=docs,account,database,debugging,development,functions,branching"
+		}
 	},
 	"inputs": []
 }
