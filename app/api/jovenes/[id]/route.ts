@@ -1,16 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+let serverSupabaseClient: ReturnType<typeof createClient> | null = null
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
+function getSupabaseClient() {
+  if (!serverSupabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+    serverSupabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  }
+
+  return serverSupabaseClient
+}
+
+// Verify token with timeout
+async function verifyToken(token: string, timeoutMs = 8000) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const supabase = getSupabaseClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    clearTimeout(timeoutId)
+    return { user, error: authError }
+  } catch (error) {
+    clearTimeout(timeoutId)
+    throw error
+  }
 }
 
 // GET /api/jovenes/[id] - Obtener detalles de un joven
@@ -19,7 +41,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = getSupabaseClient()
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -32,14 +53,17 @@ export async function GET(
     const token = authHeader.split('Bearer ')[1]
     const joven_id = id
 
-    // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    // Verificar token con timeout
+    const { user, error: authError } = await verifyToken(token)
     if (authError || !user) {
+      console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
       )
     }
+
+    const supabase = getSupabaseClient()
 
     // Obtener joven con información del grupo
     const { data: joven, error } = await supabase
@@ -86,7 +110,6 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = getSupabaseClient()
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -100,14 +123,17 @@ export async function PUT(
     const body = await request.json()
     const joven_id = id
 
-    // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    // Verificar token con timeout
+    const { user, error: authError } = await verifyToken(token)
     if (authError || !user) {
+      console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
       )
     }
+
+    const supabase = getSupabaseClient()
 
     // Verificar que el usuario existe en la tabla users
     const { data: currentUser } = await supabase
@@ -158,7 +184,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = getSupabaseClient()
   console.log('🗑️ DELETE request for joven ID:', id);
 
   try {
@@ -175,8 +200,8 @@ export async function DELETE(
     const joven_id = id
     console.log('🔑 Token presente, verificando con Supabase...');
 
-    // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    // Verificar token con timeout
+    const { user, error: authError } = await verifyToken(token)
     if (authError || !user) {
       console.log('❌ Token inválido:', authError?.message);
       return NextResponse.json(
@@ -184,6 +209,8 @@ export async function DELETE(
         { status: 401 }
       )
     }
+
+    const supabase = getSupabaseClient()
     
     console.log('✅ Usuario autenticado:', user.email, 'ID:', user.id);
 
