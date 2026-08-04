@@ -48,12 +48,40 @@ export async function GET(request: NextRequest) {
       .eq('id', userId)
       .single()
 
+    // Si el usuario no existe, crearlo automáticamente
     if (error || !currentUser) {
-      console.log('❌ User not found:', error?.message)
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
-      )
+      console.log('⚠️  User not found, creating user record')
+
+      const { data: newUser, error: createError } = await userClient
+        .from('users')
+        .insert({
+          id: userId,
+          email: (jwtDecode(token) as any).email || '',
+          nombre_completo: (jwtDecode(token) as any).email?.split('@')[0] || 'Usuario',
+          rol: 'usuario',
+          estado: 'activo',
+        })
+        .select('id, email, nombre_completo, telefono, rol, estado, ultima_sesion, created_at, updated_at')
+        .single()
+
+      if (createError || !newUser) {
+        console.log('❌ Error creating user:', createError?.message)
+        return NextResponse.json(
+          { error: 'No se pudo crear registro de usuario' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: newUser,
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      })
     }
 
     console.log('✅ User found:', currentUser.id)
