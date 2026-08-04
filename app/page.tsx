@@ -54,13 +54,24 @@ export default function Home() {
         />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12 max-w-7xl mx-auto">
+      {/* Hero Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/ComiteCP2026.webp')",
+        }}
+      />
+
+      {/* Dark Overlay for Text Legibility */}
+      <div className="absolute inset-0 bg-black/60" />
+
+      <div className="relative z-10 flex flex-col items-center justify-between min-h-screen px-4 py-12 max-w-7xl mx-auto">
         {/* Hero Section */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="text-center space-y-6 max-w-7xl mx-auto"
+          className="text-center space-y-6 max-w-7xl mx-auto pt-20"
         >
           <motion.div variants={itemVariants} className="inline-flex items-center px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[#F5A623] text-[10px] sm:text-xs font-medium mb-2">
             <span className="relative flex h-1.5 w-1.5 mr-2">
@@ -83,23 +94,24 @@ export default function Home() {
           >
             Sistema integral para la organización, seguimiento y crecimiento espiritual de la juventud pentecostal.
           </motion.p>
+        </motion.div>
 
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-4 pt-6 justify-center w-full sm:w-auto px-4"
-          >
-            <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full bg-[#F5A623] hover:bg-[#F5A623]/90 text-[#1A1A1A] font-black h-14 md:h-16 px-8 rounded-2xl text-base shadow-[0_20px_40px_-10px_rgba(245,166,35,0.3)] transition-all duration-300 group hover:scale-[1.02] active:scale-95">
-                ACCEDER AL PORTAL
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link href="/registro" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full border-white/10 text-white bg-white/5 backdrop-blur-md hover:bg-white/10 font-bold h-14 md:h-16 px-8 rounded-2xl text-base transition-all duration-300 active:scale-95">
-                REGISTRAR JOVEN
-              </Button>
-            </Link>
-          </motion.div>
+        {/* Buttons Section - Positioned at bottom */}
+        <motion.div
+          variants={itemVariants}
+          className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto px-4 pb-20"
+        >
+          <Link href="/login" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full bg-[#F5A623] hover:bg-[#F5A623]/90 text-[#1A1A1A] font-black h-14 md:h-16 px-8 rounded-2xl text-base shadow-[0_20px_40px_-10px_rgba(245,166,35,0.3)] transition-all duration-300 group hover:scale-[1.02] active:scale-95">
+              ACCEDER AL PORTAL
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+          <Link href="/registro" className="w-full sm:w-auto">
+            <Button size="lg" variant="outline" className="w-full border-white/10 text-white bg-white/5 backdrop-blur-md hover:bg-white/10 font-bold h-14 md:h-16 px-8 rounded-2xl text-base transition-all duration-300 active:scale-95">
+              REGISTRAR JOVEN
+            </Button>
+          </Link>
         </motion.div>
 
         {/* Features Section */}
