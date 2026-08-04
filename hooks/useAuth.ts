@@ -12,46 +12,43 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true
+    let unsubscribe: (() => void) | undefined
 
-    const initAuth = async () => {
-      try {
-        console.log('🔐 Initializing auth session...')
+    try {
+      console.log('🔐 Initializing auth session...')
 
-        // Use onAuthStateChange - more reliable than getSession()
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, newSession) => {
-            console.log('🔐 Auth state changed:', event, { hasSession: !!newSession })
+      // Use onAuthStateChange - more reliable than getSession()
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          console.log('🔐 Auth state changed:', event, { hasSession: !!newSession })
 
-            if (mounted) {
-              if (newSession) {
-                console.log('✅ Session active:', newSession.user.email)
-                setSession(newSession)
-                setApiToken(newSession.access_token)
-              } else {
-                console.log('❌ Session cleared')
-                setSession(null)
-                setApiToken(null)
-              }
-              setLoading(false)
+          if (mounted) {
+            if (newSession) {
+              console.log('✅ Session active:', newSession.user.email)
+              setSession(newSession)
+              setApiToken(newSession.access_token)
+            } else {
+              console.log('❌ Session cleared')
+              setSession(null)
+              setApiToken(null)
             }
+            setLoading(false)
           }
-        )
-
-        return () => subscription?.unsubscribe()
-      } catch (err) {
-        console.error('❌ Auth initialization error:', err)
-        if (mounted) {
-          setError(err instanceof Error ? err.message : 'Error initializing auth')
-          setLoading(false)
         }
+      )
+
+      unsubscribe = () => subscription?.unsubscribe()
+    } catch (err) {
+      console.error('❌ Auth initialization error:', err)
+      if (mounted) {
+        setError(err instanceof Error ? err.message : 'Error initializing auth')
+        setLoading(false)
       }
     }
 
-    const unsubscribe = initAuth()
-
     return () => {
       mounted = false
-      unsubscribe?.then(fn => fn?.())
+      unsubscribe?.()
     }
   }, [])
 
