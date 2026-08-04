@@ -37,7 +37,6 @@ function verifyTokenLocally(token: string) {
     return {
       user: {
         id: decoded.sub,
-        email: decoded.email,
         ...decoded,
       },
       error: null,
@@ -92,20 +91,21 @@ export async function GET(
     }
 
     // Calcular edad si no está en la base de datos
-    if (joven.fecha_nacimiento && !joven.edad) {
-      const birthDate = new Date(joven.fecha_nacimiento)
+    const jovenData = joven as any
+    if (jovenData.fecha_nacimiento && !jovenData.edad) {
+      const birthDate = new Date(jovenData.fecha_nacimiento)
       const today = new Date()
       let age = today.getFullYear() - birthDate.getFullYear()
       const monthDiff = today.getMonth() - birthDate.getMonth()
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--
       }
-      joven.edad = age
+      jovenData.edad = age
     }
 
     return NextResponse.json({
       success: true,
-      data: joven,
+      data: jovenData,
     })
   } catch (error) {
     console.error('Error en GET /api/jovenes/[id]:', error)
@@ -162,12 +162,14 @@ export async function PUT(
     }
 
     // Actualizar joven
-    const { data: joven, error } = await supabase
+    const queryResult: any = await (supabase as any)
       .from('jovenes')
       .update(body)
       .eq('id', joven_id)
       .select()
       .single()
+
+    const { data: joven, error } = queryResult
 
     if (error) {
       console.error('Error al actualizar joven:', error)
@@ -227,11 +229,13 @@ export async function DELETE(
     console.log('✅ Usuario autenticado:', user.email, 'ID:', user.id);
 
     // Verificar que el usuario existe en la tabla users
-    const { data: currentUser } = await supabase
+    const userQueryResult: any = await (supabase as any)
       .from('users')
       .select('rol')
       .eq('id', user.id)
       .single()
+
+    const { data: currentUser } = userQueryResult
 
     if (!currentUser) {
       console.log('❌ Usuario no encontrado en tabla users');
@@ -245,11 +249,13 @@ export async function DELETE(
     console.log('🗑️ Intentando eliminar joven con ID:', joven_id);
 
     // En lugar de eliminar, marcar como inactivo
-    const { data: result, error } = await supabase
+    const deleteQueryResult: any = await (supabase as any)
       .from('jovenes')
       .update({ estado: 'inactivo' })
       .eq('id', joven_id)
       .select()
+
+    const { data: result, error } = deleteQueryResult
 
     if (error) {
       console.error('💥 Error al eliminar joven:', error);
