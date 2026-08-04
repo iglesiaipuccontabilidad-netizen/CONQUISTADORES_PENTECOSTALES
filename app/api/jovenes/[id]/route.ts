@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { jwtDecode } from 'jwt-decode'
 
 let serverSupabaseClient: ReturnType<typeof createClient> | null = null
 
@@ -19,19 +20,30 @@ function getSupabaseClient() {
   return serverSupabaseClient
 }
 
-// Verify token with timeout
-async function verifyToken(token: string, timeoutMs = 8000) {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-
+// Verify token locally without network call to Supabase Auth
+function verifyTokenLocally(token: string) {
   try {
-    const supabase = getSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    clearTimeout(timeoutId)
-    return { user, error: authError }
+    const decoded = jwtDecode(token) as { sub: string; email: string; exp: number; [key: string]: any }
+
+    // Check if token is expired
+    if (decoded.exp) {
+      const now = Math.floor(Date.now() / 1000)
+      if (decoded.exp < now) {
+        return { user: null, error: new Error('Token expired') }
+      }
+    }
+
+    // Return decoded user info
+    return {
+      user: {
+        id: decoded.sub,
+        email: decoded.email,
+        ...decoded,
+      },
+      error: null,
+    }
   } catch (error) {
-    clearTimeout(timeoutId)
-    throw error
+    return { user: null, error: error instanceof Error ? error : new Error('Invalid token') }
   }
 }
 
@@ -53,8 +65,8 @@ export async function GET(
     const token = authHeader.split('Bearer ')[1]
     const joven_id = id
 
-    // Verificar token con timeout
-    const { user, error: authError } = await verifyToken(token)
+    // Verificar token localmente sin llamada a red
+    const { user, error: authError } = verifyTokenLocally(token)
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
@@ -123,8 +135,8 @@ export async function PUT(
     const body = await request.json()
     const joven_id = id
 
-    // Verificar token con timeout
-    const { user, error: authError } = await verifyToken(token)
+    // Verificar token localmente sin llamada a red
+    const { user, error: authError } = verifyTokenLocally(token)
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
@@ -198,10 +210,10 @@ export async function DELETE(
 
     const token = authHeader.split('Bearer ')[1]
     const joven_id = id
-    console.log('🔑 Token presente, verificando con Supabase...');
+    console.log('🔑 Token presente, verificando localmente...');
 
-    // Verificar token con timeout
-    const { user, error: authError } = await verifyToken(token)
+    // Verificar token localmente sin llamada a red
+    const { user, error: authError } = verifyTokenLocally(token)
     if (authError || !user) {
       console.log('❌ Token inválido:', authError?.message);
       return NextResponse.json(
