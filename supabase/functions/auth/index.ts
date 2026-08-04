@@ -96,6 +96,27 @@ Deno.serve(async (req) => {
         return errorResponse('Credenciales inválidas', 401)
       }
 
+      // Verificar si el usuario existe en la tabla users
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', data.user?.id)
+        .single()
+
+      // Si el usuario no existe, crearlo
+      if (!existingUser) {
+        console.log('🆕 Creando usuario en tabla users:', data.user?.id)
+        await supabase
+          .from('users')
+          .insert({
+            id: data.user?.id,
+            email: data.user?.email,
+            nombre_completo: data.user?.email?.split('@')[0] || 'Usuario',
+            rol: 'usuario',
+            estado: 'activo',
+          })
+      }
+
       // Actualizar última_sesión
       await supabase
         .from('users')
