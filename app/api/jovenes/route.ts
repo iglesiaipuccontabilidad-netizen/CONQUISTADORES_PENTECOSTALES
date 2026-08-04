@@ -3,16 +3,30 @@ import { createClient } from '@supabase/supabase-js'
 import { jwtDecode } from 'jwt-decode'
 import { createCorsResponse, createCorsErrorResponse, createCorsOptionsResponse } from '@/utils/cors'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
+
+function getUserClient(token: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    },
+  })
+}
 
 // OPTIONS /api/jovenes - CORS preflight
 export async function OPTIONS(request: NextRequest) {
@@ -29,6 +43,7 @@ export async function OPTIONS(request: NextRequest) {
 
 // GET /api/jovenes - Listar todos los jóvenes
 export async function GET(request: NextRequest) {
+  const supabase = getSupabaseClient()
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -57,13 +72,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Create userClient for queries (respects RLS)
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
-    })
+    const userClient = getUserClient(token)
 
     console.log('✅ Auth user validated')
 
@@ -138,6 +147,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/jovenes - Crear nuevo joven
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseClient()
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -165,13 +175,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create userClient for mutations (respects RLS)
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
-    })
+    const userClient = getUserClient(token)
 
     console.log('✅ Auth user validated for POST')
 

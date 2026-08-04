@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
 
 // Función para validar celular colombiano
 function validateCelular(celular: string): boolean {
@@ -18,6 +20,7 @@ function validateCelular(celular: string): boolean {
 
 // POST /api/joven/registro - Registro público de joven (sin autenticación)
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseClient()
   try {
     console.log('🟡 Iniciando POST /api/joven/registro');
     const body = await request.json()
