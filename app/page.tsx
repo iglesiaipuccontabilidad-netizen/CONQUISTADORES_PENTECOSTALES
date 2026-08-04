@@ -62,57 +62,59 @@ export default function Home() {
         }}
       />
 
-      {/* Dark Overlay for Text Legibility */}
-      <div className="absolute inset-0 bg-black/60" />
+      {/* Dark Overlay - More transparent to show image */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
 
-      <div className="relative z-10 flex flex-col items-center justify-between min-h-screen px-4 py-12 max-w-7xl mx-auto">
-        {/* Hero Section */}
+      {/* Top Navigation Bar */}
+      <div className="relative z-20 flex items-center justify-between px-4 sm:px-8 py-6 w-full">
+        {/* Badge - Left */}
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="text-center space-y-6 max-w-7xl mx-auto pt-20"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[#F5A623] text-[10px] sm:text-xs font-medium"
         >
-          <motion.div variants={itemVariants} className="inline-flex items-center px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[#F5A623] text-[10px] sm:text-xs font-medium mb-2">
-            <span className="relative flex h-1.5 w-1.5 mr-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5A623] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#F5A623]"></span>
-            </span>
-            Gestión Unánimes 2026
-          </motion.div>
-
-          <motion.h1
-            variants={itemVariants}
-            className="text-[clamp(2rem,8.2vw,8.5rem)] font-black text-white tracking-tighter leading-[0.85] uppercase whitespace-nowrap px-2"
-          >
-            CONQUISTA<span className="text-[#F5A623]">DORES</span>
-          </motion.h1>
-
-          <motion.p
-            variants={itemVariants}
-            className="text-base sm:text-lg md:text-xl text-slate-300 max-w-xl mx-auto leading-relaxed font-light px-2"
-          >
-            Sistema integral para la organización, seguimiento y crecimiento espiritual de la juventud pentecostal.
-          </motion.p>
+          <span className="relative flex h-1.5 w-1.5 mr-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5A623] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#F5A623]"></span>
+          </span>
+          Gestión Unánimes 2026
         </motion.div>
 
-        {/* Buttons Section - Positioned at bottom */}
+        {/* Buttons - Right */}
         <motion.div
-          variants={itemVariants}
-          className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto px-4 pb-20"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex flex-col sm:flex-row gap-3"
         >
-          <Link href="/login" className="w-full sm:w-auto">
-            <Button size="lg" className="w-full bg-[#F5A623] hover:bg-[#F5A623]/90 text-[#1A1A1A] font-black h-14 md:h-16 px-8 rounded-2xl text-base shadow-[0_20px_40px_-10px_rgba(245,166,35,0.3)] transition-all duration-300 group hover:scale-[1.02] active:scale-95">
+          <Link href="/login">
+            <Button size="sm" className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-6 rounded-xl text-sm transition-all duration-300 active:scale-95">
               ACCEDER AL PORTAL
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
-          <Link href="/registro" className="w-full sm:w-auto">
-            <Button size="lg" variant="outline" className="w-full border-white/10 text-white bg-white/5 backdrop-blur-md hover:bg-white/10 font-bold h-14 md:h-16 px-8 rounded-2xl text-base transition-all duration-300 active:scale-95">
+          <Link href="/registro">
+            <Button size="sm" className="bg-[#F5A623] hover:bg-[#F5A623]/90 text-[#1A1A1A] font-black px-6 rounded-xl text-sm shadow-[0_20px_40px_-10px_rgba(245,166,35,0.3)] transition-all duration-300 active:scale-95">
               REGISTRAR JOVEN
             </Button>
           </Link>
         </motion.div>
+      </div>
+
+      {/* Center Spacer */}
+      <div className="relative z-10 flex-1" />
+
+      {/* Title at Bottom */}
+      <div className="relative z-10 px-4 sm:px-8 pb-12 sm:pb-20">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-[clamp(2.5rem,10vw,9rem)] font-black text-white tracking-tighter leading-[0.85] uppercase"
+        >
+          CONQUISTA<span className="text-[#F5A623]">DORES</span>
+        </motion.h1>
+      </div>
 
         {/* Features Section */}
         <motion.div
