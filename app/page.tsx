@@ -114,7 +114,6 @@ export default function Home() {
         >
           CONQUISTA<span className="text-[#F5A623]">DORES</span>
         </motion.h1>
-      </div>
 
         {/* Features Section */}
         <motion.div
