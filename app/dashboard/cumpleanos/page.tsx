@@ -11,6 +11,24 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Joven } from '@/types';
 
+const StarIcon = ({ size = 24, className, ...props }: { size?: number; className?: string } & React.SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+
 export default function CumpleanosPage() {
   const { isLoading, error, cumpleanosHoy, cumpleanosSemana, estadisticasMes, jovenesPorMes, proximos30 } = useCumpleanos();
   const [activeTab, setActiveTab] = useState<string>('hoy');
@@ -362,22 +380,3 @@ function BirthdayCard({ joven, onAction, variant = 'today' }: BirthdayCardProps)
     </motion.div>
   );
 }
-
-
-const StarIcon = ({ size = 24, className, ...props }: { size?: number; className?: string } & React.SVGProps<SVGSVGElement>) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
