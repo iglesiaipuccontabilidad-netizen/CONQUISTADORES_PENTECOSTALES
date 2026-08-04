@@ -4,3 +4,5 @@ node_modules
 .claude/settings.local.json
 .mcp.json
 .vscode/mcp.json
+.next
+.turbo
