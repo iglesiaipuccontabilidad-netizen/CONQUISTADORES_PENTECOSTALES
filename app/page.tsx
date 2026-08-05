@@ -109,7 +109,7 @@ export default function Home() {
       <div className="relative z-10 flex-1 min-h-[3rem] md:flex-1" />
 
       {/* Title at Bottom - Responsive padding and spacing */}
-      <div className="relative z-10 px-4 sm:px-8 pb-8 sm:pb-16 md:pb-20 w-full">
+      <div className="relative z-10 px-4 sm:px-8 pb-5 sm:pb-6 md:pb-8 w-full">
         {/* Wordmark lockup: line 2 distributes its letters to match the measured
             width of line 1, so both words read as one block at any viewport. */}
         <motion.h1
@@ -133,7 +133,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="mt-5 sm:mt-7 max-w-sm sm:max-w-md text-sm sm:text-base text-white/80 leading-relaxed [text-shadow:0_1px_12px_rgba(0,0,0,0.6)]"
+          className="mt-3 sm:mt-4 max-w-sm sm:max-w-md text-sm sm:text-base text-white/80 leading-relaxed [text-shadow:0_1px_12px_rgba(0,0,0,0.6)]"
         >
           Registro y acompañamiento de la juventud de la congregación.
         </motion.p>
@@ -143,7 +143,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
-          className="mt-10 sm:mt-12 md:mt-14 pt-5 sm:pt-6 border-t border-white/10 w-full text-center"
+          className="mt-4 sm:mt-5 md:mt-6 pt-3 sm:pt-4 border-t border-white/10 w-full text-center"
         >
           <p className="text-white/40 text-[11px] sm:text-sm">
             © 2026 IPUC Unánimes - Desarrollado para la gloria de Dios
