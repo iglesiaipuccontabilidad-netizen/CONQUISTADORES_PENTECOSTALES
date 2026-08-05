@@ -58,9 +58,39 @@ export async function GET(request: NextRequest) {
       .eq('id', userId)
       .single()
 
-    // Si el usuario no existe, crearlo automáticamente con service role
-    if (error || !currentUser) {
+    // Si el usuario no existe (error 406 = no rows), crearlo automáticamente con service role
+    // Para otros errores, retornar el error
+    if (error) {
+      console.log('⚠️  Error fetching user:', error.code, error.message)
+      // 406 = no rows returned (user doesn't exist)
+      // 401 = permission denied (RLS)
+      if (error.code !== 'PGRST116') {
+        console.log('❌ Error fetching user (not a "not found" error):', error.code)
+        return NextResponse.json(
+          { error: `Error al obtener usuario: ${error.message}` },
+          { status: 500 }
+        )
+      }
       console.log('⚠️  User not found, creating user record')
+    }
+
+    if (!error && currentUser) {
+      // Usuario existe, retornarlo
+      console.log('✅ User found:', currentUser.id)
+      return NextResponse.json({
+        success: true,
+        data: currentUser,
+      }, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      })
+    }
+
+    // Si llegamos aquí, el usuario no existe y debemos crearlo
+    if (error && error.code === 'PGRST116') {
 
       if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         console.log('❌ SUPABASE_SERVICE_ROLE_KEY not configured')
@@ -91,8 +121,10 @@ export async function GET(request: NextRequest) {
 
       if (createError || !newUser) {
         console.log('❌ Error creating user:', createError?.message)
+        console.log('❌ Create error details:', { code: createError?.code, details: createError?.details })
+        console.log('❌ Response status:', createError?.status)
         return NextResponse.json(
-          { error: 'No se pudo crear registro de usuario' },
+          { error: `No se pudo crear registro de usuario: ${createError?.message}` },
           { status: 500 }
         )
       }
@@ -109,18 +141,11 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log('✅ User found:', currentUser.id)
-
-    return NextResponse.json({
-      success: true,
-      data: currentUser,
-    }, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      }
-    })
+    // Should not reach here
+    return NextResponse.json(
+      { error: 'Unexpected state' },
+      { status: 500 }
+    )
 
   } catch (error) {
     console.error('Error en GET /api/users/me:', error)
