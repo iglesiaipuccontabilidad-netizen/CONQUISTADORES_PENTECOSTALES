@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Users, BarChart3, ArrowRight } from "lucide-react";
+
+const WORDMARK_LINE_2 = "PENTECOSTALES";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -28,12 +28,14 @@ const itemVariants = {
 };
 
 export default function Home() {
+  const reduceMotion = useReducedMotion();
+
   return (
     <main className="min-h-[100vh] md:min-h-screen bg-[#1A1A1A] relative overflow-hidden font-sans flex flex-col">
-      {/* Animated Background Elements */}
+      {/* Animated Background Elements - visible on mobile below the contained photo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          animate={{
+          animate={reduceMotion ? undefined : {
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
             x: [0, 50, 0],
@@ -43,7 +45,7 @@ export default function Home() {
           className="absolute -top-24 -left-24 w-96 h-96 bg-[#00338D] blur-[100px] rounded-full opacity-30"
         />
         <motion.div
-          animate={{
+          animate={reduceMotion ? undefined : {
             scale: [1, 1.3, 1],
             opacity: [0.2, 0.4, 0.2],
             x: [0, -40, 0],
@@ -62,8 +64,10 @@ export default function Home() {
         }}
       />
 
-      {/* Dark Overlay - Adjusted for mobile visibility */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 md:via-black/50 to-black/70" />
+      {/* Directional scrims: contrast only where text sits, so the faces in the
+          middle of the photo stay legible instead of being flattened by a global veil. */}
+      <div className="absolute inset-x-0 top-0 h-32 sm:h-40 bg-gradient-to-b from-black/70 via-black/30 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-[60%] sm:h-[55%] bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
 
       {/* Top Navigation Bar */}
       <div className="relative z-20 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 w-full">
@@ -106,85 +110,47 @@ export default function Home() {
 
       {/* Title at Bottom - Responsive padding and spacing */}
       <div className="relative z-10 px-4 sm:px-8 pb-8 sm:pb-16 md:pb-20 w-full">
+        {/* Wordmark lockup: line 2 distributes its letters to match the measured
+            width of line 1, so both words read as one block at any viewport. */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-[clamp(2rem,9vw,9rem)] font-black text-white tracking-tighter leading-[0.85] uppercase"
+          aria-label="Conquistadores Pentecostales"
+          className="w-fit text-[clamp(1.75rem,8.5vw,9rem)] font-black tracking-tighter leading-[0.85] uppercase [text-shadow:0_2px_24px_rgba(0,0,0,0.55)]"
         >
-          CONQUISTA<span className="text-[#F5A623]">DORES</span>
+          <span aria-hidden="true" className="block text-white">
+            CONQUISTADORES
+          </span>
+          <span aria-hidden="true" className="flex justify-between text-[#F5A623]">
+            {WORDMARK_LINE_2.split("").map((letter, index) => (
+              <span key={`${letter}-${index}`}>{letter}</span>
+            ))}
+          </span>
         </motion.h1>
 
-        {/* Features Section - Responsive grid and spacing */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-10 sm:mt-20 md:mt-32 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full"
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="mt-5 sm:mt-7 max-w-sm sm:max-w-md text-sm sm:text-base text-white/80 leading-relaxed [text-shadow:0_1px_12px_rgba(0,0,0,0.6)]"
         >
-          <FeatureCard
-            icon={<Shield className="w-8 h-8 text-white" />}
-            title="Gestión Segura"
-            description="Administración centralizada y segura de la información de cada joven de la congregación."
-            gradient="from-[#00338D] to-[#0066B3]"
-          />
-          <FeatureCard
-            icon={<Users className="w-8 h-8 text-white" />}
-            title="Comunidad Activa"
-            description="Organiza grupos, actividades y mantén un seguimiento cercano del progreso espiritual."
-            gradient="from-[#009FDA] to-[#0066B3]"
-          />
-          <FeatureCard
-            icon={<BarChart3 className="w-8 h-8 text-white" />}
-            title="Análisis y Reportes"
-            description="Visualiza el impacto del trabajo ministerial a través de datos y estadísticas precisas."
-            gradient="from-[#0066B3] to-[#F5A623]"
-          />
-        </motion.div>
+          Registro y acompañamiento de la juventud de la congregación.
+        </motion.p>
 
         {/* Footer info - Responsive spacing */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="mt-12 sm:mt-16 md:mt-20 pt-6 sm:pt-8 border-t border-white/10 w-full text-center"
+          transition={{ delay: 1.2 }}
+          className="mt-10 sm:mt-12 md:mt-14 pt-5 sm:pt-6 border-t border-white/10 w-full text-center"
         >
-          <p className="text-slate-500 text-[11px] sm:text-sm">
+          <p className="text-white/40 text-[11px] sm:text-sm">
             © 2026 IPUC Unánimes - Desarrollado para la gloria de Dios
           </p>
         </motion.div>
       </div>
     </main>
-  );
-}
-
-function FeatureCard({ icon, title, description, gradient }: { icon: React.ReactNode, title: string, description: string, gradient: string }) {
-  return (
-    <motion.div
-      whileHover={{ y: -8, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className={`group relative p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br ${gradient} hover:shadow-2xl transition-all duration-500 overflow-hidden min-h-fit shadow-xl shadow-black/20 cursor-pointer`}
-    >
-      {/* Diagonal accent line */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500" />
-
-      {/* Icon container with subtle background */}
-      <div className="relative z-10 mb-4 sm:mb-6 inline-flex p-3 sm:p-4 rounded-2xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-        {icon}
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10">
-        <h3 className="text-lg sm:text-xl md:text-2xl font-black text-white mb-2 sm:mb-3 tracking-tight line-clamp-2">{title}</h3>
-        <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed line-clamp-3">{description}</p>
-      </div>
-
-      {/* Hover arrow */}
-      <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 z-10">
-        <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/70" />
-      </div>
-    </motion.div>
   );
 }
 
