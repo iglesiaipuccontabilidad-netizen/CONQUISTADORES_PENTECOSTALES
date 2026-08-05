@@ -29,7 +29,7 @@ const itemVariants = {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#1A1A1A] relative overflow-hidden font-sans">
+    <main className="min-h-[100vh] md:min-h-screen bg-[#1A1A1A] relative overflow-hidden font-sans flex flex-col">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -54,19 +54,19 @@ export default function Home() {
         />
       </div>
 
-      {/* Hero Background Image */}
+      {/* Hero Background Image - Responsive positioning */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-no-repeat md:bg-cover md:bg-center bg-contain bg-top"
         style={{
           backgroundImage: "url('/ComiteCP2026.webp')",
         }}
       />
 
-      {/* Dark Overlay - More transparent to show image */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+      {/* Dark Overlay - Adjusted for mobile visibility */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 md:via-black/50 to-black/70" />
 
       {/* Top Navigation Bar */}
-      <div className="relative z-20 flex items-center justify-between px-4 sm:px-8 py-6 w-full">
+      <div className="relative z-20 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 w-full">
         {/* Badge - Left */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -101,53 +101,56 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Center Spacer */}
-      <div className="relative z-10 flex-1" />
+      {/* Center Spacer - Responsive height */}
+      <div className="relative z-10 flex-1 min-h-[3rem] md:flex-1" />
 
-      {/* Title at Bottom */}
-      <div className="relative z-10 px-4 sm:px-8 pb-12 sm:pb-20">
+      {/* Title at Bottom - Responsive padding and spacing */}
+      <div className="relative z-10 px-4 sm:px-8 pb-8 sm:pb-16 md:pb-20 w-full">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-[clamp(2.5rem,10vw,9rem)] font-black text-white tracking-tighter leading-[0.85] uppercase"
+          className="text-[clamp(2rem,9vw,9rem)] font-black text-white tracking-tighter leading-[0.85] uppercase"
         >
           CONQUISTA<span className="text-[#F5A623]">DORES</span>
         </motion.h1>
 
-        {/* Features Section */}
+        {/* Features Section - Responsive grid and spacing */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-20 sm:mt-32 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-2 sm:px-4"
+          className="mt-10 sm:mt-20 md:mt-32 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full"
         >
           <FeatureCard
-            icon={<Shield className="w-10 h-10 text-[#F5A623]" />}
+            icon={<Shield className="w-8 h-8 text-white" />}
             title="Gestión Segura"
             description="Administración centralizada y segura de la información de cada joven de la congregación."
+            gradient="from-[#00338D] to-[#0066B3]"
           />
           <FeatureCard
-            icon={<Users className="w-10 h-10 text-[#009FDA]" />}
+            icon={<Users className="w-8 h-8 text-white" />}
             title="Comunidad Activa"
             description="Organiza grupos, actividades y mantén un seguimiento cercano del progreso espiritual."
+            gradient="from-[#009FDA] to-[#0066B3]"
           />
           <FeatureCard
-            icon={<BarChart3 className="w-10 h-10 text-[#0066B3]" />}
+            icon={<BarChart3 className="w-8 h-8 text-white" />}
             title="Análisis y Reportes"
             description="Visualiza el impacto del trabajo ministerial a través de datos y estadísticas precisas."
+            gradient="from-[#0066B3] to-[#F5A623]"
           />
         </motion.div>
 
-        {/* Footer info */}
+        {/* Footer info - Responsive spacing */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
-          className="mt-20 pt-8 border-t border-white/10 w-full text-center"
+          className="mt-12 sm:mt-16 md:mt-20 pt-6 sm:pt-8 border-t border-white/10 w-full text-center"
         >
-          <p className="text-slate-500 text-xs sm:text-sm">
+          <p className="text-slate-500 text-[11px] sm:text-sm">
             © 2026 IPUC Unánimes - Desarrollado para la gloria de Dios
           </p>
         </motion.div>
@@ -156,20 +159,30 @@ export default function Home() {
   );
 }
 
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+function FeatureCard({ icon, title, description, gradient }: { icon: React.ReactNode, title: string, description: string, gradient: string }) {
   return (
     <motion.div
-      whileHover={{ y: -5 }}
-      className="group relative p-6 sm:p-8 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 hover:border-white/20 transition-all duration-500 overflow-hidden"
+      whileHover={{ y: -8, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className={`group relative p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br ${gradient} hover:shadow-2xl transition-all duration-500 overflow-hidden min-h-fit shadow-xl shadow-black/20 cursor-pointer`}
     >
-      <div className="mb-6 inline-flex p-3 rounded-2xl bg-white/5 group-hover:bg-white/10 transition-colors">
+      {/* Diagonal accent line */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500" />
+
+      {/* Icon container with subtle background */}
+      <div className="relative z-10 mb-4 sm:mb-6 inline-flex p-3 sm:p-4 rounded-2xl bg-white/20 backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
         {icon}
       </div>
-      <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 tracking-tight">{title}</h3>
-      <p className="text-sm sm:text-base text-slate-400 leading-relaxed">{description}</p>
 
-      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <ArrowRight className="w-5 h-5 text-white/20" />
+      {/* Content */}
+      <div className="relative z-10">
+        <h3 className="text-lg sm:text-xl md:text-2xl font-black text-white mb-2 sm:mb-3 tracking-tight line-clamp-2">{title}</h3>
+        <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed line-clamp-3">{description}</p>
+      </div>
+
+      {/* Hover arrow */}
+      <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300 z-10">
+        <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white/70" />
       </div>
     </motion.div>
   );

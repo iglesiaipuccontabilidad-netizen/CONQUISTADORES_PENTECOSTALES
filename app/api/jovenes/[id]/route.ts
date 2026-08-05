@@ -161,10 +161,22 @@ export async function PUT(
       )
     }
 
+    // Filtrar solo campos permitidos para actualización
+    const allowedFields = ['nombre_completo', 'fecha_nacimiento', 'celular', 'direccion', 'grupo_id', 'bautizado', 'sellado', 'servidor', 'simpatizante']
+    const updateData: any = {}
+
+    for (const field of allowedFields) {
+      if (field in body) {
+        updateData[field] = body[field]
+      }
+    }
+
+    console.log('📝 Updating joven with data:', updateData)
+
     // Actualizar joven
     const queryResult: any = await (supabase as any)
       .from('jovenes')
-      .update(body)
+      .update(updateData)
       .eq('id', joven_id)
       .select()
       .single()
@@ -173,8 +185,9 @@ export async function PUT(
 
     if (error) {
       console.error('Error al actualizar joven:', error)
+      console.error('Error details:', { message: error.message, code: error.code, details: error.details })
       return NextResponse.json(
-        { error: 'Error al actualizar joven' },
+        { error: 'Error al actualizar joven: ' + error.message },
         { status: 500 }
       )
     }

@@ -79,6 +79,7 @@ export default function EditJovenPage() {
     fecha_nacimiento: '',
     cedula: '',
     celular: '',
+    direccion: '',
     grupo_id: '',
     bautizado: false,
     sellado: false,
@@ -95,6 +96,7 @@ export default function EditJovenPage() {
         fecha_nacimiento: joven.fecha_nacimiento || '',
         cedula: joven.cedula || '',
         celular: joven.celular || '',
+        direccion: joven.direccion || '',
         grupo_id: joven.grupo_id || 'none',
         bautizado: joven.bautizado || false,
         sellado: joven.sellado || false,
@@ -118,8 +120,8 @@ export default function EditJovenPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.nombre_completo || !formData.celular || !formData.cedula) {
-      toast.error('Nombre, Cédula y Celular son requeridos');
+    if (!formData.nombre_completo || !formData.celular) {
+      toast.error('Nombre y Celular son requeridos');
       return;
     }
 
@@ -130,8 +132,8 @@ export default function EditJovenPage() {
         data: {
           nombre_completo: formData.nombre_completo,
           fecha_nacimiento: formData.fecha_nacimiento,
-          cedula: formData.cedula,
           celular: formData.celular,
+          direccion: formData.direccion || null,
           grupo_id: formData.grupo_id === 'none' ? null : formData.grupo_id,
           bautizado: formData.bautizado,
           sellado: formData.sellado,
@@ -274,13 +276,13 @@ export default function EditJovenPage() {
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold text-slate-700 ml-1">Documento (Cédula)</Label>
                     <div className="relative group">
-                      <IdCard className="absolute left-3.5 top-3 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                      <IdCard className="absolute left-3.5 top-3 w-5 h-5 text-slate-400 transition-colors" />
                       <Input
                         name="cedula"
                         value={formData.cedula}
-                        onChange={handleInputChange}
-                        className="pl-11 h-12 rounded-xl bg-slate-50/50 border-slate-200 focus:bg-white transition-all font-medium"
-                        placeholder="1.123.456.789"
+                        disabled
+                        className="pl-11 h-12 rounded-xl bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed font-medium"
+                        placeholder="No disponible"
                       />
                     </div>
                   </div>
@@ -309,6 +311,20 @@ export default function EditJovenPage() {
                         onChange={handleInputChange}
                         className="pl-11 h-12 rounded-xl bg-slate-50/50 border-slate-200 focus:bg-white transition-all font-medium"
                         placeholder="310 123 4567"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-sm font-semibold text-slate-700 ml-1">Dirección (Opcional)</Label>
+                    <div className="relative group">
+                      <Home className="absolute left-3.5 top-3 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                      <Input
+                        name="direccion"
+                        value={formData.direccion}
+                        onChange={handleInputChange}
+                        className="pl-11 h-12 rounded-xl bg-slate-50/50 border-slate-200 focus:bg-white transition-all font-medium"
+                        placeholder="Ej: Carrera 5 #12-34, Apartamento 201"
                       />
                     </div>
                   </div>

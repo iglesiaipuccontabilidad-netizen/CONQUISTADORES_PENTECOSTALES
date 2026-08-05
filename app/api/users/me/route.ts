@@ -121,8 +121,7 @@ export async function GET(request: NextRequest) {
 
       if (createError || !newUser) {
         console.log('❌ Error creating user:', createError?.message)
-        console.log('❌ Create error details:', { code: createError?.code, details: createError?.details })
-        console.log('❌ Response status:', createError?.status)
+        console.log('❌ Create error details:', { code: createError?.code, details: createError?.details, hint: createError?.hint })
         return NextResponse.json(
           { error: `No se pudo crear registro de usuario: ${createError?.message}` },
           { status: 500 }

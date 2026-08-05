@@ -23,6 +23,7 @@ export interface Joven {
   fecha_nacimiento: string
   edad?: number
   celular: string
+  direccion?: string | null
   bautizado: boolean
   sellado: boolean
   servidor: boolean

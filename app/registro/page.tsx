@@ -80,7 +80,6 @@ export default function RegistroPage() {
     resolver: zodResolver(registroJovenSchema),
     defaultValues: {
       nombre_completo: '',
-      cedula: '',
       fecha_nacimiento: '',
       celular: '',
       estados: [],
@@ -189,10 +188,9 @@ export default function RegistroPage() {
   // Calculate form completion percentage
   const completionPercentage = useMemo(() => {
     const fields = form.watch()
-    const totalFields = 6 // nombre, cedula, fecha, celular, estados, 1 consentimiento
+    const totalFields = 5 // nombre, fecha, celular, estados, 1 consentimiento
     let completedFields = 0
     if (fields.nombre_completo?.length >= 3) completedFields++
-    if (fields.cedula && /^\d{8,10}$/.test(fields.cedula)) completedFields++
     if (fields.fecha_nacimiento && validatorsColombia.validateAgeRange(fields.fecha_nacimiento)) completedFields++
     if (fields.celular && validatorsColombia.validateCelular(fields.celular)) completedFields++
     if (fields.estados.length > 0) completedFields++
@@ -208,7 +206,6 @@ export default function RegistroPage() {
   const completedFields = useMemo(() => {
     let count = 0
     if (watchedFields.nombre_completo?.length >= 3) count++
-    if (watchedFields.cedula && /^\d{8,10}$/.test(watchedFields.cedula)) count++
     if (watchedFields.fecha_nacimiento && validatorsColombia.validateAgeRange(watchedFields.fecha_nacimiento)) count++
     if (watchedFields.celular && validatorsColombia.validateCelular(watchedFields.celular)) count++
     if (watchedFields.estados.length > 0) count++
@@ -424,30 +421,7 @@ export default function RegistroPage() {
                             )}
                           />
 
-                          <FormField
-                            control={form.control}
-                            name="cedula"
-                            render={({ field }) => (
-                              <FormItem className="space-y-4">
-                                <FormLabel className="text-xs uppercase tracking-[0.2em] font-black text-slate-500 ml-1">Cédula *</FormLabel>
-                                <FormControl>
-                                  <div className="relative group">
-                                    <Input
-                                      id="cedula-field"
-                                      placeholder="P. ej. 12345678"
-                                      {...field}
-                                      className="h-14 md:h-16 w-full px-4 md:px-6 bg-slate-50 border-slate-200 focus:border-[#00338D] focus:bg-white text-slate-900 rounded-xl md:rounded-2xl transition-all font-semibold placeholder:text-slate-400 focus:ring-4 focus:ring-[#00338D]/5 shadow-sm text-sm md:text-base"
-                                      disabled={loading}
-                                    />
-                                    <CreditCard className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-[#00338D] transition-colors" />
-                                  </div>
-                                </FormControl>
-                                <FormMessage className="text-red-500 text-[10px] font-bold uppercase tracking-wider" />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
+<FormField
                             control={form.control}
                             name="fecha_nacimiento"
                             render={({ field }) => (

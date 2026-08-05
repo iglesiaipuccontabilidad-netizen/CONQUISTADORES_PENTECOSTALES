@@ -5,6 +5,7 @@ export interface Joven {
   edad?: number;
   cedula: string;
   celular: string;
+  direccion?: string;
   bautizado: boolean;
   sellado: boolean;
   servidor: boolean;
