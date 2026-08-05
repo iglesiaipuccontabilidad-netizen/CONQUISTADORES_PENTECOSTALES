@@ -27,6 +27,8 @@ export function parseDataUrl(valor: unknown): ImagenPayload | null {
 
   if (!MIMES_PERMITIDOS.includes(mime)) return null
   if (!BASE64_VALIDO.test(base64)) return null
+  // Base64 encoding groups characters in multiples of 4; validate length accordingly.
+  if (base64.length % 4 !== 0) return null
 
   // Cada 4 caracteres base64 son 3 bytes; el relleno '=' resta.
   const relleno = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0

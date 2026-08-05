@@ -39,4 +39,25 @@ describe('parseDataUrl', () => {
     const grande = 'A'.repeat(Math.ceil((MAX_BYTES + 1024) / 3) * 4)
     expect(parseDataUrl(`data:image/jpeg;base64,${grande}`)).toBeNull()
   })
+
+  it('rechaza base64 con longitud que no es múltiplo de 4', () => {
+    expect(parseDataUrl('data:image/jpeg;base64,AAAAA')).toBeNull()
+  })
+
+  it('acepta imagen de exactamente MAX_BYTES', () => {
+    // Para MAX_BYTES exacto: si N % 3 == 0, usar (N/3)*4 caracteres.
+    // MAX_BYTES = 4194304; 4194304 % 3 == 1, así que (4194303/3)*4 + 'AA==' = 1 byte más.
+    const sinRelleno = 'A'.repeat((Math.floor((MAX_BYTES - 1) / 3) * 4))
+    const conRelleno = 'AA==' // Suma 1 byte
+    const r = parseDataUrl(`data:image/jpeg;base64,${sinRelleno}${conRelleno}`)
+    expect(r).not.toBeNull()
+    expect(r!.bytes).toBe(MAX_BYTES)
+  })
+
+  it('rechaza imagen de MAX_BYTES + 1', () => {
+    // (MAX_BYTES + 1) % 3 = 2, así que necesitamos: ((MAX_BYTES + 1 - 2) / 3) * 4 + 'AAA='
+    const sinRelleno = 'A'.repeat(Math.floor((MAX_BYTES - 1) / 3) * 4)
+    const conRelleno = 'AAA=' // Suma 2 bytes para totalizar MAX_BYTES + 1
+    expect(parseDataUrl(`data:image/jpeg;base64,${sinRelleno}${conRelleno}`)).toBeNull()
+  })
 })
