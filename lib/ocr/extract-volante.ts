@@ -47,11 +47,25 @@ const ESQUEMA_GEMINI = {
   required: ['bautizado', 'sellado', 'servidor', 'simpatizante'],
 }
 
-async function fetchConTimeout(url: string, init: RequestInit): Promise<Response> {
+// El controlador debe permanecer armado durante toda la lectura del cuerpo,
+// no solo hasta que lleguen los encabezados: un proveedor que responde rápido
+// pero envía el cuerpo a cuentagotas, si no, cuelga sin límite de tiempo.
+// Por eso este helper hace fetch + lectura/parseo del cuerpo, y solo libera
+// el temporizador en el finally que envuelve todo el ciclo.
+async function fetchJsonConTimeout(
+  url: string,
+  init: RequestInit
+): Promise<{ ok: boolean; status: number; json: any }> {
   const controlador = new AbortController()
   const temporizador = setTimeout(() => controlador.abort(), TIMEOUT_MS)
   try {
-    return await fetch(url, { ...init, signal: controlador.signal })
+    const res = await fetch(url, { ...init, signal: controlador.signal })
+    // El estado ya está disponible con los encabezados; si no es OK, no hace
+    // falta leer el cuerpo (que podría no ser JSON, p. ej. una página de error
+    // de un proxy) para reportar el fallo.
+    if (!res.ok) return { ok: false, status: res.status, json: null }
+    const json = await res.json()
+    return { ok: true, status: res.status, json }
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
       throw new ErrorOcr('El proveedor tardó demasiado', true)
@@ -66,7 +80,7 @@ async function llamarGemini(base64: string, mime: string): Promise<unknown> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new ErrorOcr('GEMINI_API_KEY no configurada')
 
-  const res = await fetchConTimeout(
+  const { ok, status, json } = await fetchJsonConTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODELO_GEMINI}:generateContent`,
     {
       method: 'POST',
@@ -84,48 +98,57 @@ async function llamarGemini(base64: string, mime: string): Promise<unknown> {
     }
   )
 
-  if (!res.ok) throw new ErrorOcr(`Gemini respondió ${res.status}`)
+  if (!ok) throw new ErrorOcr(`Gemini respondió ${status}`)
 
-  const json = await res.json()
   const texto = json?.candidates?.[0]?.content?.parts?.[0]?.text
   if (typeof texto !== 'string') throw new ErrorOcr('Gemini devolvió una respuesta vacía')
 
-  return JSON.parse(texto)
+  try {
+    return JSON.parse(texto)
+  } catch {
+    throw new ErrorOcr('Gemini devolvió una respuesta que no es JSON válido')
+  }
 }
 
 async function llamarGroq(base64: string, mime: string): Promise<unknown> {
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) throw new ErrorOcr('GROQ_API_KEY no configurada')
 
-  const res = await fetchConTimeout('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: MODELO_GROQ,
-      temperature: 0,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `${PROMPT}\n\nDevuelve un objeto JSON con exactamente estas claves: nombre_completo, celular, fecha_nacimiento, direccion, bautizado, sellado, servidor, simpatizante.`,
-            },
-            { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
-          ],
-        },
-      ],
-    }),
-  })
+  const { ok, status, json } = await fetchJsonConTimeout(
+    'https://api.groq.com/openai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: MODELO_GROQ,
+        temperature: 0,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `${PROMPT}\n\nDevuelve un objeto JSON con exactamente estas claves: nombre_completo, celular, fecha_nacimiento, direccion, bautizado, sellado, servidor, simpatizante.`,
+              },
+              { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
+            ],
+          },
+        ],
+      }),
+    }
+  )
 
-  if (!res.ok) throw new ErrorOcr(`Groq respondió ${res.status}`)
+  if (!ok) throw new ErrorOcr(`Groq respondió ${status}`)
 
-  const json = await res.json()
   const texto = json?.choices?.[0]?.message?.content
   if (typeof texto !== 'string') throw new ErrorOcr('Groq devolvió una respuesta vacía')
 
-  return JSON.parse(texto)
+  try {
+    return JSON.parse(texto)
+  } catch {
+    throw new ErrorOcr('Groq devolvió una respuesta que no es JSON válido')
+  }
 }
 
 export async function extraerDatosVolante(base64: string, mime: string): Promise<unknown> {
