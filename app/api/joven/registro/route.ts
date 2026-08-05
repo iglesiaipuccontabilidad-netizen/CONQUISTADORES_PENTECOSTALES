@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
     // Validaciones básicas
     const {
       nombre_completo,
-      cedula,
       fecha_nacimiento,
       celular,
       direccion,
@@ -40,24 +39,15 @@ export async function POST(request: NextRequest) {
       consentimiento_datos_personales
     } = body
 
-    if (!nombre_completo || !cedula || !fecha_nacimiento || !celular) {
+    if (!nombre_completo || !fecha_nacimiento || !celular) {
       console.log('❌ Error: Campos obligatorios faltantes');
       return NextResponse.json(
-        { status: 'error', error: 'Campos obligatorios: nombre_completo, cedula, fecha_nacimiento, celular' },
+        { status: 'error', error: 'Campos obligatorios: nombre_completo, fecha_nacimiento, celular' },
         { status: 400 }
       )
     }
 
     console.log('✅ Campos obligatorios validados');
-
-    // Validar formato de cedula
-    if (!/^\d{8,10}$/.test(cedula)) {
-      console.log('❌ Error: Cédula inválida:', cedula);
-      return NextResponse.json(
-        { status: 'error', error: 'La cédula debe tener 8-10 dígitos' },
-        { status: 400 }
-      )
-    }
 
     // Validar formato de celular
     if (!validateCelular(celular)) {
@@ -77,30 +67,11 @@ export async function POST(request: NextRequest) {
       edad--
     }
 
-    // Verificar si ya existe un joven con el mismo cedula
-    console.log('🆔 Verificando duplicado por cédula:', cedula)
-    const { data: existingJovenByCedula, error: cedulaCheckError } = await supabase
-      .from('jovenes')
-      .select('id, nombre_completo')
-      .eq('cedula', cedula)
-      .eq('estado', 'activo')
-      .single()
-
-    if (cedulaCheckError && cedulaCheckError.code !== 'PGRST116') {
-      console.log('❌ Error al verificar cédula duplicada:', cedulaCheckError)
+    // Validar rango de edad (12-35 años)
+    if (edad < 12 || edad > 35) {
+      console.log('❌ Error: Edad fuera de rango:', edad)
       return NextResponse.json(
-        { status: 'error', error: 'Error interno del servidor' },
-        { status: 500 }
-      )
-    }
-
-    if (existingJovenByCedula) {
-      console.log('❌ Cédula duplicada encontrada:', existingJovenByCedula)
-      return NextResponse.json(
-        {
-          status: 'error',
-          error: `Ya existe un joven registrado con la cédula ${cedula} (${existingJovenByCedula.nombre_completo}). Por favor, verifica la información.`
-        },
+        { status: 'error', error: 'Debes tener entre 12 y 35 años para registrarte' },
         { status: 400 }
       )
     }
@@ -164,7 +135,6 @@ export async function POST(request: NextRequest) {
     // Preparar datos del joven
     const jovenData = {
       nombre_completo,
-      cedula,
       fecha_nacimiento,
       edad,
       celular,
