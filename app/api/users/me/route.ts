@@ -18,12 +18,22 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.split('Bearer ')[1]
 
-    // Decode JWT to get user ID
+    // Decode JWT to get user ID and email
     let userId: string
+    let userEmail: string
     try {
       const decoded: any = jwtDecode(token)
       userId = decoded.sub
-      console.log('✅ Token decoded, user ID:', userId)
+      userEmail = decoded.email
+      console.log('✅ Token decoded, user ID:', userId, 'email:', userEmail)
+
+      if (!userEmail) {
+        console.log('❌ Missing email in JWT')
+        return NextResponse.json(
+          { error: 'Email no disponible en el token' },
+          { status: 400 }
+        )
+      }
     } catch (err) {
       console.log('❌ Invalid token:', err)
       return NextResponse.json(
@@ -48,16 +58,31 @@ export async function GET(request: NextRequest) {
       .eq('id', userId)
       .single()
 
-    // Si el usuario no existe, crearlo automáticamente
+    // Si el usuario no existe, crearlo automáticamente con service role
     if (error || !currentUser) {
       console.log('⚠️  User not found, creating user record')
 
-      const { data: newUser, error: createError } = await userClient
+      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.log('❌ SUPABASE_SERVICE_ROLE_KEY not configured')
+        return NextResponse.json(
+          { error: 'Error de configuración del servidor' },
+          { status: 500 }
+        )
+      }
+
+      const serviceClient = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+
+      const { data: newUser, error: createError } = await serviceClient
         .from('users')
         .insert({
           id: userId,
-          email: (jwtDecode(token) as any).email || '',
-          nombre_completo: (jwtDecode(token) as any).email?.split('@')[0] || 'Usuario',
+          email: userEmail,
+          nombre_completo: userEmail.split('@')[0] || 'Usuario',
           rol: 'usuario',
           estado: 'activo',
         })
