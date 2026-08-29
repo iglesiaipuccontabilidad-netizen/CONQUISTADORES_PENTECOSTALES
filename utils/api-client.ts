@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
+import { supabase } from '../lib/supabase'
 
 interface ApiErrorResponse {
   success: false
@@ -62,15 +63,22 @@ apiClient.interceptors.response.use(
     });
 
     if (status === 401) {
-      // Clear the token on 401
-      setApiToken(null)
-      localStorage.removeItem('auth_token')
-      console.log('🔑 Unauthorized - token cleared');
-
-      // Redirect to login if we're not already there
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        window.location.href = '/login?redirected=true'
-      }
+      // A single request 401ing doesn't necessarily mean the whole session
+      // is gone (e.g. a request fired before the token was ready yet, or a
+      // route-specific issue) - verify against the real Supabase session
+      // before forcing a full logout redirect, to avoid false-positive
+      // logouts while navigating between dashboard pages.
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          setApiToken(null)
+          console.log('🔑 Unauthorized and no active session - redirecting to login')
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login?redirected=true'
+          }
+        } else {
+          console.log('🔑 Got 401 but session is still valid - not logging out, request likely fired before token was ready')
+        }
+      })
     }
     return Promise.reject(error)
   }
