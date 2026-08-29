@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useGrupos } from '../../../../hooks/useGrupos';
+import { useLideres } from '@/hooks/useLideres';
+import { useJovenes } from '@/hooks/useJovenes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +18,9 @@ import {
   Save,
   X,
   Users,
-  Trash2
+  Trash2,
+  UserMinus,
+  UserPlus
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,13 +32,49 @@ import { es } from 'date-fns/locale';
 export default function GrupoDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const grupo_id = params.id as string;
   const { useGetGrupo, updateGrupo, deleteGrupo } = useGrupos();
   const { data: grupo, isLoading, error } = useGetGrupo(grupo_id);
+  const { data: lideres, isLoading: isLoadingLideres } = useLideres();
+  const { jovenes: todosLosJovenes, updateJoven } = useJovenes();
   const [formData, setFormData] = useState<Partial<Grupo> | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(searchParams.get('edit') === '1');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedJovenId, setSelectedJovenId] = useState('');
+  const [isAddingMiembro, setIsAddingMiembro] = useState(false);
+  const [removingMiembroId, setRemovingMiembroId] = useState<string | null>(null);
+
+  const jovenesSinGrupo = (todosLosJovenes || []).filter((j) => !j.grupo_id);
+
+  const handleAddMiembro = async () => {
+    if (!selectedJovenId) return;
+    setIsAddingMiembro(true);
+    try {
+      await updateJoven.mutateAsync({ id: selectedJovenId, data: { grupo_id } });
+      toast.success('Integrante agregado al grupo');
+      setSelectedJovenId('');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error('Error al agregar integrante: ' + errorMessage);
+    } finally {
+      setIsAddingMiembro(false);
+    }
+  };
+
+  const handleRemoveMiembro = async (jovenId: string) => {
+    setRemovingMiembroId(jovenId);
+    try {
+      await updateJoven.mutateAsync({ id: jovenId, data: { grupo_id: null } });
+      toast.success('Integrante removido del grupo');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error('Error al remover integrante: ' + errorMessage);
+    } finally {
+      setRemovingMiembroId(null);
+    }
+  };
 
   useEffect(() => {
     if (grupo) {
@@ -227,6 +267,62 @@ export default function GrupoDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Integrantes del Grupo ({grupo.jovenes?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Select value={selectedJovenId} onValueChange={setSelectedJovenId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Seleccionar joven sin grupo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jovenesSinGrupo.length === 0 ? (
+                        <div className="px-2 py-1.5 text-sm text-gray-500">No hay jóvenes sin grupo</div>
+                      ) : (
+                        jovenesSinGrupo.map((j) => (
+                          <SelectItem key={j.id} value={j.id}>
+                            {j.nombre_completo}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleAddMiembro} disabled={!selectedJovenId || isAddingMiembro}>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Agregar
+                  </Button>
+                </div>
+
+                {!grupo.jovenes || grupo.jovenes.length === 0 ? (
+                  <p className="text-gray-500 text-sm py-4 text-center">Este grupo aún no tiene integrantes.</p>
+                ) : (
+                  <div className="divide-y divide-gray-100 border rounded-lg">
+                    {grupo.jovenes.map((j) => (
+                      <div key={j.id} className="flex items-center justify-between px-4 py-3">
+                        <Link href={`/dashboard/jovenes/${j.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                          {j.nombre_completo}
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveMiembro(j.id)}
+                          disabled={removingMiembroId === j.id}
+                        >
+                          <UserMinus className="w-4 h-4 mr-2" />
+                          {removingMiembroId === j.id ? 'Quitando...' : 'Quitar'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
         ) : (
           <motion.div
@@ -279,12 +375,22 @@ export default function GrupoDetailPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Líder</label>
-                    <Input
+                    <Select
                       value={formData?.lider_id || ''}
-                      onChange={(e) => setFormData({ ...formData, lider_id: e.target.value })}
-                      placeholder="ID del líder"
-                    />
-                    {/* TODO: Add leader selection dropdown */}
+                      onValueChange={(value) => setFormData({ ...formData, lider_id: value })}
+                      disabled={isLoadingLideres}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingLideres ? "Cargando líderes..." : "Seleccione un líder"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lideres?.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.nombre_completo} ({user.rol})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>

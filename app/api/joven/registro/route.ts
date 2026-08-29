@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
       sellado,
       servidor,
       simpatizante,
-      consentimiento_datos_personales
+      consentimiento_datos_personales,
+      grupo_id,
     } = body
 
     if (!nombre_completo || !fecha_nacimiento || !celular) {
@@ -139,6 +140,7 @@ export async function POST(request: NextRequest) {
       edad,
       celular,
       direccion: direccion || null,
+      grupo_id: grupo_id || null,
       estado: 'activo',
       bautizado: Boolean(bautizado),
       sellado: Boolean(sellado),

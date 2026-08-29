@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useJovenes } from '@/hooks/useJovenes';
+import { useGrupos } from '@/hooks/useGrupos';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 // Función utilitaria para calcular edad precisa
@@ -92,6 +93,7 @@ interface BadgeProps {
 
 export default function JovenesPage() {
   const { jovenes, isLoading, deleteJoven } = useJovenes();
+  const { grupos } = useGrupos();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -101,10 +103,17 @@ export default function JovenesPage() {
   // Verificar si el usuario está autenticado
   const canDelete = !!currentUser && currentUser.estado === 'activo';
 
+  const gruposPorId = useMemo(() => {
+    const map = new Map<string, string>();
+    (grupos || []).forEach((g) => map.set(g.id, g.nombre));
+    return map;
+  }, [grupos]);
+
   // Filtros
   const [edadFilter, setEdadFilter] = useState<string>('todos');
   const [estadoFilter, setEstadoFilter] = useState<string>('todos');
   const [mesCumpleanosFilter, setMesCumpleanosFilter] = useState<string>('todos');
+  const [grupoFilter, setGrupoFilter] = useState<string>('todos');
 
   // Ordenamiento
   const [sortField, setSortField] = useState<string>('nombre_completo');
@@ -164,6 +173,12 @@ export default function JovenesPage() {
       });
     }
 
+    if (grupoFilter !== 'todos') {
+      filtered = filtered.filter((joven) =>
+        grupoFilter === 'sin-grupo' ? !joven.grupo_id : joven.grupo_id === grupoFilter
+      );
+    }
+
     filtered.sort((a, b) => {
       let aValue: string | number, bValue: string | number;
       switch (sortField) {
@@ -185,7 +200,7 @@ export default function JovenesPage() {
     const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
 
     return { filtered, totalPages, paginated };
-  }, [jovenes, searchTerm, edadFilter, estadoFilter, mesCumpleanosFilter, sortField, sortDirection, currentPage]);
+  }, [jovenes, searchTerm, edadFilter, estadoFilter, mesCumpleanosFilter, grupoFilter, sortField, sortDirection, currentPage]);
 
   const { filtered: filteredJovenes, totalPages, paginated: displayedJovenes } = processedJovenes;
 
@@ -199,6 +214,7 @@ export default function JovenesPage() {
     setEdadFilter('todos');
     setEstadoFilter('todos');
     setMesCumpleanosFilter('todos');
+    setGrupoFilter('todos');
     setCurrentPage(1);
   };
 
@@ -365,7 +381,7 @@ export default function JovenesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Edad</label>
                   <Select value={edadFilter} onValueChange={handleFilterChange(setEdadFilter)}>
@@ -409,6 +425,22 @@ export default function JovenesPage() {
                       <SelectItem value="todos">Cualquier mes</SelectItem>
                       {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((mes, i) => (
                         <SelectItem key={i} value={i.toString()}>{mes}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Grupo</label>
+                  <Select value={grupoFilter} onValueChange={handleFilterChange(setGrupoFilter)}>
+                    <SelectTrigger className="h-12 bg-white border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500/10">
+                      <SelectValue placeholder="Cualquier grupo" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-100 shadow-xl">
+                      <SelectItem value="todos">Todos los grupos</SelectItem>
+                      <SelectItem value="sin-grupo">Sin grupo</SelectItem>
+                      {grupos?.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.nombre}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -488,6 +520,7 @@ export default function JovenesPage() {
                         </div>
                       </button>
                     </TableHead>
+                    <TableHead className="font-black text-slate-900 uppercase tracking-[0.15em] text-[10px]">Grupo</TableHead>
                     <TableHead className="font-black text-slate-900 uppercase tracking-[0.15em] text-[10px]">Ecosistema</TableHead>
                     <TableHead className="text-right px-8 font-black text-slate-900 uppercase tracking-[0.15em] text-[10px]">Acciones</TableHead>
                   </TableRow>
@@ -542,6 +575,15 @@ export default function JovenesPage() {
                               <span className="text-xl font-black text-slate-900 tracking-tight leading-none">{calculateAge(joven.fecha_nacimiento)}</span>
                               <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Años</span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {joven.grupo_id && gruposPorId.get(joven.grupo_id) ? (
+                              <span className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-bold">
+                                {gruposPorId.get(joven.grupo_id)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-slate-300 font-medium italic">Sin grupo</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2 flex-wrap max-w-[240px]">

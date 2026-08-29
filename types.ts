@@ -12,7 +12,7 @@ export interface Joven {
   simpatizante: boolean;
   consentimiento_datos_personales: boolean;
   estado: 'activo' | 'inactivo';
-  grupo_id?: string;
+  grupo_id?: string | null;
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -30,6 +30,8 @@ export interface Grupo {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+  integrantes_count?: number;
+  jovenes?: Pick<Joven, 'id' | 'nombre_completo' | 'fecha_nacimiento' | 'bautizado' | 'sellado' | 'servidor'>[];
 }
 
 export interface User {

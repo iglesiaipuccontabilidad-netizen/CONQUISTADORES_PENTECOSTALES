@@ -333,15 +333,31 @@ Deno.serve(async (req: Request) => {
 
       const updateData = await req.json()
 
-      // Solo admin puede actualizar
+      // Admin puede actualizar cualquier joven; lider solo los de su propio grupo
       const { data: currentUser } = await supabase
         .from('users')
         .select('rol')
         .eq('id', user.id)
         .single()
 
-      if (currentUser?.rol !== 'admin') {
-        return errorResponse('Solo admins pueden actualizar jóvenes', 403)
+      const { data: jovenActual } = await supabase
+        .from('jovenes')
+        .select('grupo_id')
+        .eq('id', joven_id)
+        .single()
+
+      let canUpdate = currentUser?.rol === 'admin'
+      if (!canUpdate && currentUser?.rol === 'lider' && jovenActual?.grupo_id) {
+        const { data: grupo } = await supabase
+          .from('grupos')
+          .select('lider_id')
+          .eq('id', jovenActual.grupo_id)
+          .single()
+        canUpdate = grupo?.lider_id === user.id
+      }
+
+      if (!canUpdate) {
+        return errorResponse('No tienes permisos para actualizar este joven', 403)
       }
 
       const { data: updatedJoven, error } = await supabase
@@ -386,21 +402,38 @@ Deno.serve(async (req: Request) => {
         return errorResponse('Token inválido', 401)
       }
 
-      // Solo admin puede eliminar
+      // Admin puede eliminar cualquier joven; lider solo los de su propio grupo
       const { data: currentUser } = await supabase
         .from('users')
         .select('rol')
         .eq('id', user.id)
         .single()
 
-      if (currentUser?.rol !== 'admin') {
-        return errorResponse('Solo admins pueden eliminar jóvenes', 403)
+      const { data: jovenActual } = await supabase
+        .from('jovenes')
+        .select('grupo_id')
+        .eq('id', joven_id)
+        .single()
+
+      let canDelete = currentUser?.rol === 'admin'
+      if (!canDelete && currentUser?.rol === 'lider' && jovenActual?.grupo_id) {
+        const { data: grupo } = await supabase
+          .from('grupos')
+          .select('lider_id')
+          .eq('id', jovenActual.grupo_id)
+          .single()
+        canDelete = grupo?.lider_id === user.id
       }
 
-      // Soft delete - marcar como eliminado
+      if (!canDelete) {
+        return errorResponse('No tienes permisos para eliminar este joven', 403)
+      }
+
+      // Soft delete - marcar como inactivo (el CHECK constraint de jovenes.estado
+      // solo permite 'activo' | 'inactivo' | 'suspendido', no 'eliminado')
       const { data: _deletedJoven, error } = await supabase
         .from('jovenes')
-        .update({ estado: 'eliminado' })
+        .update({ estado: 'inactivo' })
         .eq('id', joven_id)
         .select()
         .single()

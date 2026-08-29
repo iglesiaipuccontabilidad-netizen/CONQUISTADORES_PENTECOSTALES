@@ -60,6 +60,7 @@ export interface Grupo {
   lider?: User
   estado: 'activo' | 'inactivo'
   integrantes_count?: number
+  jovenes?: Pick<Joven, 'id' | 'nombre_completo' | 'fecha_nacimiento' | 'bautizado' | 'sellado' | 'servidor'>[]
   created_at: string
   updated_at: string
   created_by?: string

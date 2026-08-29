@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useJovenes } from '@/hooks/useJovenes';
+import { useGrupos } from '@/hooks/useGrupos';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -19,6 +21,7 @@ const createJovenSchema = z.object({
   celular: z.string().regex(/^[0-9]{10}$/, 'El celular debe tener 10 dígitos (ej: 3113678555)'),
   fecha_nacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
   direccion: z.string().optional(),
+  grupo_id: z.string().optional(),
   bautizado: z.boolean(),
   sellado: z.boolean(),
   servidor: z.boolean(),
@@ -31,6 +34,7 @@ type CreateJovenFormData = z.infer<typeof createJovenSchema>;
 export default function NewJovenPage() {
   const router = useRouter();
   const { createJovenPublic, checkNombreDuplicado } = useJovenes();
+  const { grupos, isLoading: isLoadingGrupos } = useGrupos();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [nombreDuplicado, setNombreDuplicado] = useState(false);
   const [verificandoNombre, setVerificandoNombre] = useState(false);
@@ -39,6 +43,7 @@ export default function NewJovenPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateJovenFormData>({
     resolver: zodResolver(createJovenSchema),
@@ -47,6 +52,7 @@ export default function NewJovenPage() {
       celular: '',
       fecha_nacimiento: '',
       direccion: '',
+      grupo_id: '',
       bautizado: false,
       sellado: false,
       servidor: false,
@@ -56,6 +62,7 @@ export default function NewJovenPage() {
   });
 
   const nombreCompleto = watch('nombre_completo');
+  const selectedGrupoId = watch('grupo_id');
 
   // Verificar nombres duplicados en tiempo real
   useEffect(() => {
@@ -205,7 +212,28 @@ export default function NewJovenPage() {
             )}
           </div>
 
-
+          {/* Grupo */}
+          <div>
+            <label className="block text-sm font-medium text-slate-900 mb-2">
+              Grupo
+            </label>
+            <Select
+              value={selectedGrupoId}
+              onValueChange={(value) => setValue('grupo_id', value)}
+              disabled={isLoadingGrupos}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={isLoadingGrupos ? "Cargando grupos..." : "Sin grupo asignado"} />
+              </SelectTrigger>
+              <SelectContent>
+                {grupos?.map((grupo) => (
+                  <SelectItem key={grupo.id} value={grupo.id}>
+                    {grupo.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Estados */}
           <div className="border-t pt-4">
