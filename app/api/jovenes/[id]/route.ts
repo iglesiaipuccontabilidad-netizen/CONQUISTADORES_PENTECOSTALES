@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyUserToken } from '@/lib/verify-token'
 
 let serverSupabaseClient: ReturnType<typeof createClient> | null = null
 
@@ -17,12 +18,6 @@ function getSupabaseClient() {
   }
 
   return serverSupabaseClient
-}
-
-// Verifica la firma del JWT contra Supabase Auth (no confiar en un decode sin verificar)
-async function verifyToken(supabase: ReturnType<typeof createClient>, token: string) {
-  const { data: { user }, error } = await supabase.auth.getUser(token)
-  return { user, error }
 }
 
 // Determina si el usuario puede gestionar (actualizar/eliminar) un joven dado:
@@ -79,7 +74,7 @@ export async function GET(
 
     const supabase = getSupabaseClient()
 
-    const { user, error: authError } = await verifyToken(supabase, token)
+    const { user, error: authError } = await verifyUserToken(token)
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
@@ -163,7 +158,7 @@ export async function PUT(
 
     const supabase = getSupabaseClient()
 
-    const { user, error: authError } = await verifyToken(supabase, token)
+    const { user, error: authError } = await verifyUserToken(token)
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
@@ -289,7 +284,7 @@ export async function DELETE(
 
     const supabase = getSupabaseClient()
 
-    const { user, error: authError } = await verifyToken(supabase, token)
+    const { user, error: authError } = await verifyUserToken(token)
     if (authError || !user) {
       console.log('❌ Token inválido:', authError?.message);
       return NextResponse.json(

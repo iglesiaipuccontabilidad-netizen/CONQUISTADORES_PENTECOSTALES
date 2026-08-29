@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyUserToken } from '@/lib/verify-token'
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -33,7 +34,7 @@ export async function GET(
     const grupo_id = id
 
     // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { user, error: authError } = await verifyUserToken(token)
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Token inválido' },
@@ -93,7 +94,7 @@ export async function PUT(
     const grupo_id = id
 
     // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { user, error: authError } = await verifyUserToken(token)
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Token inválido' },
@@ -215,7 +216,7 @@ export async function DELETE(
     const grupo_id = id
 
     // Verificar token con Supabase Auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    const { user, error: authError } = await verifyUserToken(token)
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Token inválido' },
