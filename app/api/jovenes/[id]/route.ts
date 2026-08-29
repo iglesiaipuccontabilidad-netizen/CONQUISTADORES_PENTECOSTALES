@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { jwtDecode } from 'jwt-decode'
 
 let serverSupabaseClient: ReturnType<typeof createClient> | null = null
 
@@ -20,30 +19,44 @@ function getSupabaseClient() {
   return serverSupabaseClient
 }
 
-// Verify token locally without network call to Supabase Auth
-function verifyTokenLocally(token: string) {
-  try {
-    const decoded = jwtDecode(token) as { sub: string; email: string; exp: number; [key: string]: any }
+// Verifica la firma del JWT contra Supabase Auth (no confiar en un decode sin verificar)
+async function verifyToken(supabase: ReturnType<typeof createClient>, token: string) {
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  return { user, error }
+}
 
-    // Check if token is expired
-    if (decoded.exp) {
-      const now = Math.floor(Date.now() / 1000)
-      if (decoded.exp < now) {
-        return { user: null, error: new Error('Token expired') }
-      }
-    }
+// Determina si el usuario puede gestionar (actualizar/eliminar) un joven dado:
+// admin siempre puede; lider solo si el joven pertenece a un grupo que lidera.
+async function canManageJoven(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  jovenGrupoId: string | null
+) {
+  const { data: currentUser, error } = await (supabase as any)
+    .from('users')
+    .select('rol, id')
+    .eq('id', userId)
+    .single()
 
-    // Return decoded user info
-    return {
-      user: {
-        id: decoded.sub,
-        ...decoded,
-      },
-      error: null,
-    }
-  } catch (error) {
-    return { user: null, error: error instanceof Error ? error : new Error('Invalid token') }
+  if (error) {
+    return { allowed: false, currentUser: null, error }
   }
+
+  if (currentUser?.rol === 'admin') {
+    return { allowed: true, currentUser, error: null }
+  }
+
+  if (currentUser?.rol === 'lider' && jovenGrupoId) {
+    const { data: grupo } = await (supabase as any)
+      .from('grupos')
+      .select('lider_id')
+      .eq('id', jovenGrupoId)
+      .single()
+
+    return { allowed: grupo?.lider_id === userId, currentUser, error: null }
+  }
+
+  return { allowed: false, currentUser, error: null }
 }
 
 // GET /api/jovenes/[id] - Obtener detalles de un joven
@@ -64,8 +77,9 @@ export async function GET(
     const token = authHeader.split('Bearer ')[1]
     const joven_id = id
 
-    // Verificar token localmente sin llamada a red
-    const { user, error: authError } = verifyTokenLocally(token)
+    const supabase = getSupabaseClient()
+
+    const { user, error: authError } = await verifyToken(supabase, token)
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
@@ -74,8 +88,6 @@ export async function GET(
       )
     }
 
-    const supabase = getSupabaseClient()
-
     // Obtener joven con información del grupo
     const { data: joven, error } = await supabase
       .from('jovenes')
@@ -83,7 +95,21 @@ export async function GET(
       .eq('id', joven_id)
       .single()
 
-    if (error || !joven) {
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Joven no encontrado' },
+          { status: 404 }
+        )
+      }
+      console.error('Error al obtener joven:', error)
+      return NextResponse.json(
+        { error: 'Error al obtener joven: ' + error.message },
+        { status: 500 }
+      )
+    }
+
+    if (!joven) {
       return NextResponse.json(
         { error: 'Joven no encontrado' },
         { status: 404 }
@@ -135,8 +161,9 @@ export async function PUT(
     const body = await request.json()
     const joven_id = id
 
-    // Verificar token localmente sin llamada a red
-    const { user, error: authError } = verifyTokenLocally(token)
+    const supabase = getSupabaseClient()
+
+    const { user, error: authError } = await verifyToken(supabase, token)
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message)
       return NextResponse.json(
@@ -145,19 +172,52 @@ export async function PUT(
       )
     }
 
-    const supabase = getSupabaseClient()
-
-    // Verificar que el usuario existe en la tabla users
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('rol, id')
-      .eq('id', user.id)
+    // Obtener el joven actual para saber a qué grupo pertenece
+    const { data: jovenActual, error: jovenActualError } = await supabase
+      .from('jovenes')
+      .select('grupo_id')
+      .eq('id', joven_id)
       .single()
+
+    if (jovenActualError) {
+      if (jovenActualError.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Joven no encontrado' },
+          { status: 404 }
+        )
+      }
+      console.error('Error al buscar joven:', jovenActualError)
+      return NextResponse.json(
+        { error: 'Error al buscar joven: ' + jovenActualError.message },
+        { status: 500 }
+      )
+    }
+
+    const { allowed, currentUser, error: permError } = await canManageJoven(
+      supabase,
+      user.id,
+      (jovenActual as any)?.grupo_id ?? null
+    )
+
+    if (permError) {
+      console.error('Error al verificar permisos:', permError)
+      return NextResponse.json(
+        { error: 'Error al verificar permisos: ' + permError.message },
+        { status: 500 }
+      )
+    }
 
     if (!currentUser) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
+      )
+    }
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para actualizar este joven' },
+        { status: 403 }
       )
     }
 
@@ -225,10 +285,11 @@ export async function DELETE(
 
     const token = authHeader.split('Bearer ')[1]
     const joven_id = id
-    console.log('🔑 Token presente, verificando localmente...');
+    console.log('🔑 Token presente, verificando...');
 
-    // Verificar token localmente sin llamada a red
-    const { user, error: authError } = verifyTokenLocally(token)
+    const supabase = getSupabaseClient()
+
+    const { user, error: authError } = await verifyToken(supabase, token)
     if (authError || !user) {
       console.log('❌ Token inválido:', authError?.message);
       return NextResponse.json(
@@ -237,18 +298,43 @@ export async function DELETE(
       )
     }
 
-    const supabase = getSupabaseClient()
-    
     console.log('✅ Usuario autenticado:', user.email, 'ID:', user.id);
 
-    // Verificar que el usuario existe en la tabla users
-    const userQueryResult: any = await (supabase as any)
-      .from('users')
-      .select('rol')
-      .eq('id', user.id)
+    // Obtener el joven actual para saber a qué grupo pertenece
+    const { data: jovenActual, error: jovenActualError } = await supabase
+      .from('jovenes')
+      .select('grupo_id')
+      .eq('id', joven_id)
       .single()
 
-    const { data: currentUser } = userQueryResult
+    if (jovenActualError) {
+      if (jovenActualError.code === 'PGRST116') {
+        console.log('❌ Joven no encontrado:', joven_id);
+        return NextResponse.json(
+          { error: 'Joven no encontrado' },
+          { status: 404 }
+        )
+      }
+      console.error('💥 Error al buscar joven:', jovenActualError);
+      return NextResponse.json(
+        { error: 'Error al buscar joven: ' + jovenActualError.message },
+        { status: 500 }
+      )
+    }
+
+    const { allowed, currentUser, error: permError } = await canManageJoven(
+      supabase,
+      user.id,
+      (jovenActual as any)?.grupo_id ?? null
+    )
+
+    if (permError) {
+      console.error('💥 Error al verificar permisos:', permError);
+      return NextResponse.json(
+        { error: 'Error al verificar permisos: ' + permError.message },
+        { status: 500 }
+      )
+    }
 
     if (!currentUser) {
       console.log('❌ Usuario no encontrado en tabla users');
@@ -257,7 +343,15 @@ export async function DELETE(
         { status: 404 }
       )
     }
-    
+
+    if (!allowed) {
+      console.log('❌ Usuario sin permisos para eliminar, rol:', currentUser.rol);
+      return NextResponse.json(
+        { error: 'No tienes permisos para eliminar este joven' },
+        { status: 403 }
+      )
+    }
+
     console.log('✅ Usuario válido, rol:', currentUser.rol);
     console.log('🗑️ Intentando eliminar joven con ID:', joven_id);
 

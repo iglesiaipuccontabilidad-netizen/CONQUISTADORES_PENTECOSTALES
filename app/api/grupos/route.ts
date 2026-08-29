@@ -74,10 +74,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Agregar conteo dummy por ahora
-    const gruposConCount = (grupos || []).map(grupo => ({
+    // Contar jóvenes activos por grupo
+    const { data: jovenesActivos } = await supabase
+      .from('jovenes')
+      .select('grupo_id')
+      .eq('estado', 'activo')
+      .not('grupo_id', 'is', null)
+
+    const countByGrupo = new Map<string, number>()
+    for (const j of (jovenesActivos as any[]) || []) {
+      if (j.grupo_id) {
+        countByGrupo.set(j.grupo_id, (countByGrupo.get(j.grupo_id) || 0) + 1)
+      }
+    }
+
+    const gruposConCount = (grupos || []).map((grupo: any) => ({
       ...grupo,
-      integrantes_count: 0 // TODO: implementar conteo real
+      integrantes_count: countByGrupo.get(grupo.id) || 0,
     }))
 
     return NextResponse.json({
@@ -132,10 +145,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Filtrar solo campos permitidos
+    const allowedFields = ['nombre', 'descripcion', 'lider_id', 'estado']
+    const insertData: Record<string, unknown> = {}
+    for (const field of allowedFields) {
+      if (field in body) {
+        insertData[field] = body[field]
+      }
+    }
+
+    if (!insertData.nombre || typeof insertData.nombre !== 'string' || insertData.nombre.trim().length < 3) {
+      return NextResponse.json(
+        { error: 'Nombre del grupo inválido (mínimo 3 caracteres)' },
+        { status: 400 }
+      )
+    }
+
+    if (!insertData.lider_id || typeof insertData.lider_id !== 'string') {
+      return NextResponse.json(
+        { error: 'Líder del grupo requerido' },
+        { status: 400 }
+      )
+    }
+
+    const { data: liderUser } = await supabase
+      .from('users')
+      .select('rol')
+      .eq('id', insertData.lider_id)
+      .single()
+
+    if (!liderUser || !['admin', 'lider'].includes((liderUser as any).rol)) {
+      return NextResponse.json(
+        { error: 'El líder seleccionado debe tener rol admin o lider' },
+        { status: 400 }
+      )
+    }
+
     // Crear grupo
     const { data: grupo, error } = await supabase
       .from('grupos')
-      .insert(body)
+      .insert(insertData)
       .select()
       .single()
 

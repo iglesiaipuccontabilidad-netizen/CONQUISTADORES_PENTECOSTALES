@@ -47,36 +47,8 @@ interface GrupoUI extends Grupo {
   color?: string;
 }
 
-// Mock data
-const mockGrupos: GrupoUI[] = [
-  {
-    id: '1',
-    nombre: 'Grupo Alfa',
-    descripcion: 'Grupo enfocado en la formación de líderes y jóvenes comprometidos con el servicio ministerial.',
-    lider_id: 'user1',
-    lider_nombre: 'Juan Pérez',
-    integrantes_count: 15,
-    estado: 'activo',
-    created_at: '2024-01-15',
-    updated_at: '2024-01-15',
-    color: 'blue'
-  },
-  {
-    id: '2',
-    nombre: 'Grupo Beta',
-    descripcion: 'Espacio dedicado a la integración de nuevos conversos y acompañamiento en su crecimiento espiritual.',
-    lider_id: 'user2',
-    lider_nombre: 'María García',
-    integrantes_count: 8,
-    estado: 'activo',
-    created_at: '2024-02-01',
-    updated_at: '2024-02-01',
-    color: 'emerald'
-  },
-];
-
 export default function GruposPage() {
-  const { grupos, isLoading, error } = useGrupos();
+  const { grupos, isLoading, error, deleteGrupo } = useGrupos();
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedGrupo, setSelectedGrupo] = useState<GrupoUI | null>(null);
@@ -116,12 +88,13 @@ export default function GruposPage() {
     if (!selectedGrupo) return;
     setIsDeleting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await deleteGrupo.mutateAsync(selectedGrupo.id);
       toast.success('Grupo eliminado correctamente');
       setDeleteDialogOpen(false);
       setSelectedGrupo(null);
     } catch (error: unknown) {
-      toast.error('Error al intentar eliminar el grupo');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error('Error al intentar eliminar el grupo: ' + errorMessage);
     } finally {
       setIsDeleting(false);
     }
@@ -262,7 +235,7 @@ export default function GruposPage() {
                               <Eye size={18} />
                             </button>
                           </Link>
-                          <Link href={`/dashboard/grupos/${grupo.id}/editar`}>
+                          <Link href={`/dashboard/grupos/${grupo.id}?edit=1`}>
                             <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm">
                               <Edit2 size={18} />
                             </button>

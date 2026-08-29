@@ -135,10 +135,41 @@ export async function PUT(
       )
     }
 
+    // Filtrar solo campos permitidos
+    const allowedFields = ['nombre', 'descripcion', 'lider_id', 'estado']
+    const updateData: Record<string, unknown> = {}
+    for (const field of allowedFields) {
+      if (field in body) {
+        updateData[field] = body[field]
+      }
+    }
+
+    if ('nombre' in updateData && (typeof updateData.nombre !== 'string' || updateData.nombre.trim().length < 3)) {
+      return NextResponse.json(
+        { error: 'Nombre del grupo inválido (mínimo 3 caracteres)' },
+        { status: 400 }
+      )
+    }
+
+    if ('lider_id' in updateData) {
+      const { data: liderUser } = await supabase
+        .from('users')
+        .select('rol')
+        .eq('id', updateData.lider_id as string)
+        .single()
+
+      if (!liderUser || !['admin', 'lider'].includes((liderUser as any).rol)) {
+        return NextResponse.json(
+          { error: 'El líder seleccionado debe tener rol admin o lider' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Actualizar grupo
     const { data: grupo, error } = await supabase
       .from('grupos')
-      .update(body)
+      .update(updateData)
       .eq('id', grupo_id)
       .select()
       .single()
